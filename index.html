@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIF-C01 · App de estudio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#0A0E1A;
+  --surface:#111827;
+  --surface-alt:#17223A;
+  --border:#293552;
+  --text:#EAF0FA;
+  --text-muted:#8B9BB8;
+  --accent:#FF9900;
+  --accent-dim:#8a5a12;
+  --accent-2:#29D3C0;
+  --danger:#FF6B6B;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,153,0,0.06) 1px, transparent 0) 0 0/28px 28px,
+    var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  min-height:100vh;
+  padding:32px 16px 64px;
+}
+.wrap{max-width:880px;margin:0 auto;}
+
+/* header */
+.top{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;}
+h1{font-family:var(--mono);font-size:26px;font-weight:700;margin:2px 0 4px;letter-spacing:-0.01em;}
+.sub{color:var(--text-muted);font-size:14px;margin-bottom:22px;}
+
+.modebar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.mode-btn{
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-muted);
+  padding:9px 16px;border-radius:8px;cursor:pointer;transition:.15s;
+}
+.mode-btn.active{background:var(--accent);color:#1a1200;border-color:var(--accent);font-weight:600;}
+.mode-btn:hover:not(.active){border-color:var(--accent-dim);color:var(--text);}
+
+/* profile bar */
+.profilebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;font-family:var(--mono);font-size:12px;}
+.profilebar .plabel{color:var(--text-muted);}
+.profilebar select{
+  font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--accent);
+  border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;
+}
+.pbtn{
+  font-family:var(--mono);font-size:11.5px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text-muted);border-radius:8px;padding:7px 11px;cursor:pointer;transition:.15s;
+}
+.pbtn:hover{border-color:var(--accent);color:var(--accent);}
+.psaved{color:var(--text-muted);opacity:.7;margin-left:auto;}
+
+/* domain chips */
+.domains{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px;}
+.chip{
+  font-family:var(--mono);font-size:11.5px;padding:6px 12px;border-radius:20px;
+  border:1px solid var(--border);color:var(--text-muted);cursor:pointer;background:transparent;
+  transition:.15s;white-space:nowrap;
+}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(255,153,0,0.08);}
+.chip .w{opacity:.55;margin-left:4px;}
+
+/* progress */
+.progress-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.progress-track{flex:1;height:4px;background:var(--surface-alt);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .25s;}
+
+/* ============ READ MODE ============ */
+#readMode{display:none;}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+.toc a{
+  font-family:var(--mono);font-size:11px;color:var(--text-muted);border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;text-decoration:none;transition:.15s;
+}
+.toc a:hover{border-color:var(--accent);color:var(--accent);}
+.article{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 34px;}
+.article > h2{font-family:var(--mono);font-size:21px;color:var(--accent);margin:0 0 6px;letter-spacing:-.01em;}
+.article .lead{color:var(--text-muted);font-size:14.5px;margin:0 0 8px;line-height:1.65;}
+.sec{scroll-margin-top:16px;}
+.sec h3{
+  font-size:17px;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);
+  color:var(--text);display:flex;align-items:center;gap:9px;
+}
+.sec h3 .n{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--accent-dim);border-radius:5px;padding:2px 7px;}
+.sec h4{font-size:14.5px;color:var(--accent-2);margin:18px 0 6px;font-family:var(--mono);font-weight:600;}
+.article p{font-size:14.5px;line-height:1.7;color:var(--text);margin:10px 0;}
+.article ul{margin:8px 0;padding-left:20px;}
+.article li{font-size:14px;line-height:1.7;margin:6px 0;color:var(--text);}
+.term{color:var(--accent-2);font-weight:600;}
+.svc{font-family:var(--mono);font-size:.9em;color:var(--accent);background:rgba(255,153,0,.07);padding:1px 5px;border-radius:4px;}
+table.tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;}
+table.tbl th,table.tbl td{border:1px solid var(--border);padding:9px 11px;text-align:left;vertical-align:top;line-height:1.55;}
+table.tbl th{background:var(--surface-alt);font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--accent);text-transform:uppercase;}
+table.tbl td b{color:var(--accent-2);}
+.note{border-left:3px solid var(--accent);background:var(--bg);padding:12px 16px;border-radius:6px;margin:14px 0;font-size:13.5px;line-height:1.65;color:var(--text-muted);}
+.note.tip{border-color:var(--accent-2);}
+.note.warn{border-color:var(--danger);}
+.note b{color:var(--text);}
+.readnav{display:flex;justify-content:space-between;margin-top:24px;gap:10px;}
+.readnav button{
+  flex:1;font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:13px;border-radius:10px;cursor:pointer;transition:.15s;
+}
+.readnav button:hover{border-color:var(--accent);color:var(--accent);}
+.readnav button:disabled{opacity:.35;cursor:default;}
+
+/* ============ FLASHCARDS ============ */
+.stage{perspective:1600px;margin-bottom:20px;}
+.card{
+  position:relative;min-height:280px;border-radius:16px;cursor:pointer;
+  transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.3,1);
+}
+.card.flipped{transform:rotateY(180deg);}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;
+  border:1px solid var(--border);background:var(--surface);
+  padding:28px 30px 24px;display:flex;flex-direction:column;
+}
+.face.back{transform:rotateY(180deg);background:var(--surface-alt);border-color:var(--accent-dim);}
+.tab{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.domain-tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--accent);
+  border:1px solid var(--accent-dim);padding:3px 9px;border-radius:5px;text-transform:uppercase;
+}
+.face.back .domain-tag{color:var(--accent-2);border-color:#1a5a52;}
+.idx{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.face-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;}
+.face-content{flex:1;display:flex;align-items:center;}
+.front-text{font-size:21px;font-weight:600;line-height:1.35;}
+.back-text{font-size:15.5px;line-height:1.6;color:var(--text);white-space:pre-line;}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--text-muted);text-align:center;margin-top:8px;}
+
+.controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+.nav-btn{
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.mark-row{display:flex;gap:8px;flex:1;justify-content:center;}
+.mark-btn{
+  font-family:var(--mono);font-size:12px;padding:11px 18px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:.15s;flex:1;max-width:180px;
+}
+.mark-btn.review:hover, .mark-btn.review.picked{border-color:var(--danger);color:var(--danger);background:rgba(255,107,107,.08);}
+.mark-btn.know:hover, .mark-btn.know.picked{border-color:var(--accent-2);color:var(--accent-2);background:rgba(41,211,192,.08);}
+
+.util-row{display:flex;justify-content:center;gap:16px;margin-top:10px;}
+.util-btn{
+  background:none;border:none;color:var(--text-muted);font-family:var(--mono);font-size:11.5px;
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+}
+.util-btn:hover{color:var(--accent);}
+
+.stats{display:flex;gap:22px;justify-content:center;margin-top:26px;font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.stats b{color:var(--text);font-size:15px;display:block;}
+.stats .know b{color:var(--accent-2);}
+.stats .review b{color:var(--danger);}
+
+/* ============ QUIZ ============ */
+.qwrap{display:none;}
+.qwrap.active{display:block;}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px 28px;margin-bottom:16px;}
+.qmeta{display:flex;justify-content:space-between;margin-bottom:14px;}
+.qtext{font-size:16.5px;font-weight:600;line-height:1.5;margin-bottom:18px;}
+.opt{
+  display:block;width:100%;text-align:left;background:var(--surface-alt);border:1px solid var(--border);
+  color:var(--text);font-family:var(--sans);font-size:14px;padding:13px 16px;border-radius:10px;
+  margin-bottom:9px;cursor:pointer;transition:.15s;line-height:1.4;
+}
+.opt:hover{border-color:var(--accent-dim);}
+.opt.correct{border-color:var(--accent-2);background:rgba(41,211,192,.1);}
+.opt.wrong{border-color:var(--danger);background:rgba(255,107,107,.1);}
+.opt:disabled{cursor:default;}
+.explain{
+  display:none;margin-top:14px;padding:14px 16px;background:var(--bg);border-left:3px solid var(--accent);
+  border-radius:6px;font-size:13.5px;line-height:1.6;color:var(--text-muted);
+}
+.explain.show{display:block;}
+.explain b{color:var(--text);}
+.qnav{display:flex;justify-content:space-between;align-items:center;}
+.qcount{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+
+@media(max-width:520px){
+  h1{font-size:21px;}
+  .article{padding:22px 18px;}
+  .front-text{font-size:18px;}
+  .card{min-height:320px;}
+  .mark-btn{padding:11px 8px;font-size:11px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <div class="eyebrow">Certificación &middot; Estudio</div>
+      <h1>AWS Certified AI Practitioner</h1>
+    </div>
+  </div>
+  <div class="sub">AIF-C01 &middot; 65 preguntas &middot; 90 min &middot; puntaje mínimo 700/1000 &middot; teoría + flashcards + práctica</div>
+
+  <div class="profilebar">
+    <span class="plabel">👤 Perfil:</span>
+    <select id="profileSelect" onchange="switchProfile(this.value)"></select>
+    <button class="pbtn" onclick="newProfile()">＋ Nuevo</button>
+    <button class="pbtn" onclick="renameProfile()">✎ Renombrar</button>
+    <span class="psaved">tu progreso se guarda en este navegador</span>
+  </div>
+
+  <div class="modebar">
+    <button class="mode-btn active" id="btnRead" onclick="setMode('read')">📖 Estudiar</button>
+    <button class="mode-btn" id="btnFlash" onclick="setMode('flash')">🗂 Flashcards</button>
+    <button class="mode-btn" id="btnQuiz" onclick="setMode('quiz')">📝 Preguntas de práctica</button>
+  </div>
+
+  <!-- ================= READ MODE ================= -->
+  <div id="readMode">
+    <div class="domains" id="readChips"></div>
+    <div class="toc" id="readToc"></div>
+    <div class="article" id="article"></div>
+    <div class="readnav">
+      <button id="readPrev" onclick="readStep(-1)">← Sección anterior</button>
+      <button id="readNext" onclick="readStep(1)">Siguiente sección →</button>
+    </div>
+  </div>
+
+  <!-- ================= FLASHCARD MODE ================= -->
+  <div id="flashMode" style="display:none">
+    <div class="domains" id="domainChips"></div>
+
+    <div class="progress-row">
+      <span id="progLabel">1 / 65</span>
+      <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="stage">
+      <div class="card" id="card" onclick="flipCard()">
+        <div class="face front">
+          <div class="tab">
+            <span class="domain-tag" id="tagFront">D1</span>
+            <span class="idx" id="idxFront"></span>
+          </div>
+          <div class="face-label">Término / Concepto</div>
+          <div class="face-content"><div class="front-text" id="frontText"></div></div>
+          <div class="hint">toca la tarjeta para ver la respuesta</div>
+        </div>
+        <div class="face back">
+          <div class="tab">
+            <span class="domain-tag" id="tagBack">D1</span>
+            <span class="idx" id="idxBack"></span>
+          </div>
+          <div class="face-label">Explicación</div>
+          <div class="face-content"><div class="back-text" id="backText"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="nav-btn" onclick="prevCard()">←</button>
+      <div class="mark-row">
+        <button class="mark-btn review" id="btnReview" onclick="markCard('review')">Repasar de nuevo</button>
+        <button class="mark-btn know" id="btnKnow" onclick="markCard('know')">Ya lo sé</button>
+      </div>
+      <button class="nav-btn" onclick="nextCard()">→</button>
+    </div>
+
+    <div class="util-row">
+      <button class="util-btn" onclick="shuffleCards()">barajar</button>
+      <button class="util-btn" onclick="resetProgress()">reiniciar progreso</button>
+    </div>
+
+    <div class="stats">
+      <div>Total<b id="statTotal">65</b></div>
+      <div class="know">Ya lo sé<b id="statKnow">0</b></div>
+      <div class="review">A repasar<b id="statReview">0</b></div>
+    </div>
+  </div>
+
+  <!-- ================= QUIZ MODE ================= -->
+  <div id="quizMode" class="qwrap">
+    <div class="qcard">
+      <div class="qmeta">
+        <span class="domain-tag" id="qTag">D1</span>
+        <span class="qcount" id="qCount">Pregunta 1 / 15</span>
+      </div>
+      <div class="qtext" id="qText"></div>
+      <div id="qOptions"></div>
+      <div class="explain" id="qExplain"></div>
+    </div>
+    <div class="qnav">
+      <button class="nav-btn" onclick="prevQuestion()">←</button>
+      <div class="stats" style="margin-top:0;">
+        <div>Correctas<b id="qScore" style="color:var(--accent-2)">0</b></div>
+      </div>
+      <button class="nav-btn" onclick="nextQuestion()">→</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ================= DOMAINS ================= */
+const DOMAINS = [
+  {id:'d1', label:'D1 · Fundamentos AI/ML', weight:20},
+  {id:'d2', label:'D2 · Fundamentos GenAI', weight:24},
+  {id:'d3', label:'D3 · Aplicación de Modelos', weight:28},
+  {id:'d4', label:'D4 · IA Responsable', weight:14},
+  {id:'d5', label:'D5 · Seguridad y Gobernanza', weight:14},
+];
+
+/* ================= STUDY CONTENT (teoría de lectura) ================= */
+/* Cubre todo lo necesario para las flashcards y las preguntas de práctica. */
+const STUDY = [
+{
+  id:'exam',
+  chip:'Sobre el examen',
+  title:'Sobre el examen AIF-C01',
+  lead:'Qué evalúa, formato, estrategia y cómo estudiar con esta app. Léelo primero para saber dónde poner el foco.',
+  sections:[
+    {h:'Formato y logística', html:`
+      <ul>
+        <li><b>65 preguntas</b> en total: <b>50 puntuadas</b> + 15 no puntuadas (de prueba, no sabes cuáles son).</li>
+        <li><b>90 minutos</b>. Puntaje: escala 100–1000, <b>apruebas con 700</b>.</li>
+        <li>Es una certificación <b>foundational</b> (de fundamentos): no exige programar ni experiencia profunda de ingeniería.</li>
+        <li>5 tipos de pregunta: <b>opción única</b> (1 correcta de 4), <b>respuesta múltiple</b> (2+ correctas de 5+), <b>ordenar</b> una secuencia (3–5), <b>emparejar</b> (3–7 pares) y <b>case study</b> (un escenario con varias preguntas).</li>
+      </ul>
+      <div class="note tip"><b>Truco de negocio:</b> ante dos respuestas técnicamente válidas, suele ganar la que es <b>administrada por AWS</b>, la más <b>simple/rápida</b> de implementar o la de <b>menor costo operativo</b>.</div>
+      <div class="note"><b>Fuente:</b> este material sigue la <b>Guía oficial del examen AWS Certified AI Practitioner (AIF-C01), versión 1.4</b>, y la documentación oficial de AWS. Está organizado por los mismos 5 dominios y task statements del examen.</div>`},
+    {h:'Los 5 dominios y su peso', html:`
+      <table class="tbl">
+        <tr><th>Dominio</th><th>Peso</th><th>De qué va</th></tr>
+        <tr><td><b>1 · Fundamentos de IA y ML</b></td><td>20%</td><td>Conceptos base, tipos de aprendizaje, cuándo (y cuándo no) usar ML, métricas.</td></tr>
+        <tr><td><b>2 · Fundamentos de IA generativa</b></td><td>24%</td><td>Tokens, embeddings, transformers, ciclo de vida, servicios GenAI de AWS.</td></tr>
+        <tr><td><b>3 · Aplicación de modelos fundacionales</b></td><td>28%</td><td>El dominio más grande: prompting, RAG, fine-tuning, parámetros de inferencia, evaluación, agentes.</td></tr>
+        <tr><td><b>4 · IA responsable</b></td><td>14%</td><td>Sesgo, equidad, explicabilidad, transparencia, herramientas de AWS.</td></tr>
+        <tr><td><b>5 · Seguridad, cumplimiento y gobernanza</b></td><td>14%</td><td>IAM, cifrado, auditoría, ataques a modelos, gobernanza de datos.</td></tr>
+      </table>
+      <p>El <b>Dominio 3 (28%)</b> es el que más pesa: domina RAG vs fine-tuning y los parámetros de inferencia. Junto con el Dominio 2, la IA generativa es casi la mitad del examen.</p>`},
+    {h:'Cómo usar esta app', html:`
+      <ul>
+        <li><b>📖 Estudiar</b> (esta sección): la teoría completa por dominio. Cubre todo lo que preguntan las flashcards y el quiz.</li>
+        <li><b>🗂 Flashcards</b>: memoriza términos y servicios. Marca "ya lo sé" / "a repasar".</li>
+        <li><b>📝 Práctica</b>: preguntas tipo examen con explicación de por qué cada opción es correcta o no.</li>
+      </ul>
+      <div class="note">Recorrido recomendado: leer un dominio aquí → repasar sus flashcards → resolver las preguntas de práctica de ese dominio.</div>`},
+  ]
+},
+{
+  id:'d1',
+  chip:'D1 · AI/ML',
+  title:'Dominio 1 · Fundamentos de IA y ML (20%)',
+  lead:'La base conceptual: qué es un modelo, cómo aprende, tipos de aprendizaje, cuándo conviene ML, y cómo se mide si funciona.',
+  sections:[
+    {h:'Conceptos base', html:`
+      <ul>
+        <li><span class="term">Algoritmo</span>: conjunto de instrucciones/pasos para resolver un problema.</li>
+        <li><span class="term">Modelo</span>: el resultado de <b>entrenar</b> un algoritmo con datos; es lo "aprendido" que luego se usa para predecir.</li>
+        <li><span class="term">Inferencia</span>: cuando el modelo ya entrenado responde ante <b>datos nuevos</b>.</li>
+        <li><span class="term">Endpoint</span> (en <span class="svc">SageMaker</span>): el punto donde se publica el modelo para que otras aplicaciones lo consuman.</li>
+        <li><span class="term">LLM</span> (Large Language Model): modelo de lenguaje grande basado en transformers.</li>
+      </ul>
+      <h4>Tipos de datos que debes reconocer</h4>
+      <ul>
+        <li><span class="term">Etiquetados vs no etiquetados</span>: con/sin la "respuesta correcta" ya marcada (supervisado vs no supervisado).</li>
+        <li><span class="term">Estructurados vs no estructurados</span>: tablas/columnas vs texto libre, imágenes, audio.</li>
+        <li><span class="term">Tabulares</span> (filas/columnas), <span class="term">series de tiempo</span> (valores en el tiempo, para forecasting), <span class="term">imagen</span> y <span class="term">texto</span>.</li>
+      </ul>`},
+    {h:'La jerarquía: IA ⊃ ML ⊃ Deep Learning ⊃ GenAI ⊃ Agentic AI', html:`
+      <ul>
+        <li><span class="term">IA</span>: sistemas que imitan capacidades humanas.</li>
+        <li><span class="term">Machine Learning</span>: aprende patrones de los datos <b>sin programación explícita</b>.</li>
+        <li><span class="term">Deep Learning</span>: redes neuronales multicapa; más datos y cómputo, patrones más complejos.</li>
+        <li><span class="term">GenAI</span>: genera contenido nuevo (texto, imagen, audio).</li>
+        <li><span class="term">Agentic AI</span>: GenAI que además <b>actúa de forma autónoma</b> (planifica, usa herramientas).</li>
+      </ul>`},
+    {h:'Tipos de aprendizaje', html:`
+      <table class="tbl">
+        <tr><th>Tipo</th><th>Datos</th><th>Ejemplos</th></tr>
+        <tr><td><b>Supervisado</b></td><td>Etiquetados</td><td>Clasificación, regresión</td></tr>
+        <tr><td><b>No supervisado</b></td><td>Sin etiquetas</td><td>Clustering, detección de anomalías</td></tr>
+        <tr><td><b>Por refuerzo</b></td><td>Recompensa/castigo</td><td>Ensayo y error, robótica, RLHF</td></tr>
+      </table>
+      <h4>Algoritmos que debes reconocer</h4>
+      <ul>
+        <li><span class="term">Regresión lineal</span>: ajusta una línea → predice <b>valores continuos</b> (numéricos).</li>
+        <li><span class="term">Regresión logística</span>: pese al nombre, se usa para <b>clasificación</b> (ej. spam / no spam); da una probabilidad 0–1.</li>
+        <li><span class="term">K-means</span>: <b>clustering no supervisado</b>, agrupa datos sin etiquetas.</li>
+        <li><span class="term">Árboles de decisión / Random Forest</span>: <b>interpretables</b>, explican cada decisión con reglas sí/no. Ideales cuando hay que <b>justificar</b> una predicción (crédito, auditoría). En cambio, las redes profundas son más precisas pero "caja negra".</li>
+      </ul>`},
+    {h:'Transfer learning', html:`
+      <p><span class="term">Transfer learning</span>: tomar un modelo ya entrenado en una tarea y <b>adaptarlo a una tarea nueva relacionada</b> sin entrenar desde cero. Ahorra tiempo, datos y costo. Es la base de por qué se parte de modelos pre-entrenados en casi todos los proyectos empresariales.</p>`},
+    {h:'Overfitting vs Underfitting', html:`
+      <table class="tbl">
+        <tr><th></th><th>Overfitting</th><th>Underfitting</th></tr>
+        <tr><td>Síntoma</td><td>Excelente en entrenamiento, <b>malo con datos nuevos</b></td><td>Malo en todo</td></tr>
+        <tr><td>Causa</td><td>Alta <b>varianza</b>: "memoriza"</td><td>Alto <b>sesgo</b>: demasiado simple</td></tr>
+        <tr><td>Solución</td><td>Más datos, regularización, simplificar, data augmentation, early stopping</td><td>Más complejidad/features, entrenar más</td></tr>
+      </table>
+      <div class="note"><span class="svc">SageMaker Debugger</span> monitorea el entrenamiento en tiempo real y avisa si hay overfitting/underfitting.</div>`},
+    {h:'Los 4 tipos de inferencia (SageMaker)', html:`
+      <table class="tbl">
+        <tr><th>Tipo</th><th>Cuándo usarlo</th></tr>
+        <tr><td><b>Tiempo real</b></td><td>Baja latencia, tráfico <b>constante</b> (chatbots, Lex, Personalize).</td></tr>
+        <tr><td><b>Batch (Transform)</b></td><td>Muchos registros a la vez, <b>sin</b> respuesta inmediata.</td></tr>
+        <tr><td><b>Asíncrona</b></td><td>Inputs <b>grandes</b> (hasta 1 GB); encola y entrega al terminar.</td></tr>
+        <tr><td><b>Serverless</b></td><td>Tráfico <b>intermitente/impredecible</b>; no pagas infra ociosa.</td></tr>
+      </table>`},
+    {h:'Servicios de IA administrados de AWS (muy preguntados)', html:`
+      <p>Servicios "listos para usar" — no entrenas nada, solo llamas la API. Reconócelos por su <b>tarea</b>:</p>
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Para qué</th></tr>
+        <tr><td><span class="svc">Textract</span></td><td>Extrae <b>texto</b> de documentos escaneados (OCR — qué dice).</td></tr>
+        <tr><td><span class="svc">Comprehend</span></td><td>Entiende el <b>significado</b> del texto (sentimiento, entidades, idioma, PII).</td></tr>
+        <tr><td><span class="svc">Transcribe</span></td><td>Voz → texto (speech-to-text).</td></tr>
+        <tr><td><span class="svc">Polly</span></td><td>Texto → voz (text-to-speech).</td></tr>
+        <tr><td><span class="svc">Translate</span></td><td>Traducción entre idiomas.</td></tr>
+        <tr><td><span class="svc">Lex</span></td><td>Chatbots conversacionales (la tecnología detrás de Alexa).</td></tr>
+        <tr><td><span class="svc">Rekognition</span></td><td>Análisis de <b>imágenes y video</b> (objetos, caras, moderación).</td></tr>
+        <tr><td><span class="svc">Kendra</span></td><td><b>Búsqueda inteligente</b> en documentos empresariales.</td></tr>
+        <tr><td><span class="svc">Personalize</span></td><td>Recomendaciones personalizadas (estilo Amazon.com).</td></tr>
+        <tr><td><span class="svc">Fraud Detector</span></td><td>Detección de fraude en línea.</td></tr>
+      </table>
+      <p>Combos típicos: <span class="svc">Transcribe</span> → <span class="svc">Comprehend</span> (analizar llamadas), o <span class="svc">Textract</span> → <span class="svc">Comprehend</span> (procesar documentos).</p>
+      <h4>Ecosistema SageMaker</h4>
+      <ul>
+        <li><span class="svc">SageMaker</span>: plataforma para <b>construir, entrenar y desplegar</b> modelos propios.</li>
+        <li><span class="svc">Data Wrangler</span>: preparación/limpieza de datos.</li>
+        <li><span class="svc">Feature Store</span>: almacén centralizado de features.</li>
+        <li><span class="svc">Model Monitor</span>: vigila el modelo en producción (drift).</li>
+      </ul>
+      <div class="note warn"><b>¿Cuándo NO usar ML?</b> Cuando necesitas exactitud <b>determinística</b>, cuando ya existe una fórmula simple, o cuando la decisión pone en riesgo directo la vida de alguien sin supervisión humana.</div>`},
+    {h:'Métricas: cómo saber si el modelo funciona', html:`
+      <h4>Métricas del modelo (técnicas)</h4>
+      <ul>
+        <li><span class="term">Accuracy</span>: % total de predicciones correctas.</li>
+        <li><span class="term">Precision</span>: de lo que el modelo dijo "positivo", cuánto lo era de verdad → evita <b>falsos positivos</b>.</li>
+        <li><span class="term">Recall</span>: de todos los positivos reales, cuántos detectó → evita <b>falsos negativos</b>.</li>
+        <li><span class="term">F1 Score</span>: media armónica de precision y recall; útil cuando hay <b>desbalance de clases</b>.</li>
+        <li><span class="term">AUC</span> (Area Under the ROC Curve): mide qué tan bien el modelo separa clases; 1.0 = perfecto, 0.5 = azar.</li>
+      </ul>
+      <h4>Métricas de negocio</h4>
+      <p>Costo por usuario, ROI, feedback del cliente, tasa de conversión. Son las que <b>justifican</b> el proyecto ante el negocio. El examen distingue mucho entre "métrica técnica" y "métrica de negocio".</p>`},
+    {h:'MLOps y puesta en producción', html:`
+      <ul>
+        <li><span class="term">Managed API</span> (ej. <span class="svc">Bedrock</span>): AWS gestiona la infraestructura.</li>
+        <li><span class="term">Self-hosted</span> (ej. en <span class="svc">SageMaker</span>/EC2): más control, más responsabilidad operativa.</li>
+        <li><span class="term">MLOps</span>: experimentación estructurada, procesos repetibles, sistemas escalables, monitoreo continuo y re-entrenamiento periódico.</li>
+      </ul>`},
+  ]
+},
+{
+  id:'d2',
+  chip:'D2 · GenAI',
+  title:'Dominio 2 · Fundamentos de IA generativa (24%)',
+  lead:'Cómo funciona la GenAI por dentro (tokens, embeddings, transformers), su ciclo de vida, sus riesgos y los servicios GenAI de AWS.',
+  sections:[
+    {h:'Vocabulario esencial', html:`
+      <ul>
+        <li><span class="term">Token</span>: pedazo de texto; una palabra completa o solo parte de ella. <b>Se cobra por token</b>.</li>
+        <li><span class="term">Chunking</span>: dividir un texto largo en fragmentos más pequeños.</li>
+        <li><span class="term">Embeddings / vectores</span>: lista de números que representa el <b>significado</b> de un dato. Permiten comparar significados en vez de palabras exactas → <b>búsqueda semántica</b>.</li>
+        <li><span class="term">Transformer</span>: la arquitectura que permite al modelo usar el <b>contexto</b> para saber qué información es relevante.</li>
+        <li><span class="term">Latent space</span>: el espacio matemático donde el modelo "guarda" lo aprendido.</li>
+      </ul>`},
+    {h:'Tipos de modelos', html:`
+      <ul>
+        <li><span class="term">Foundation Model (modelo fundacional)</span>: modelo base entrenado a gran escala, adaptable a muchas tareas.</li>
+        <li><span class="term">Multimodal</span>: entiende más de un tipo de dato a la vez (texto + imagen).</li>
+        <li><span class="term">Modelos de difusión</span>: generan imágenes partiendo de ruido aleatorio que "limpian" (Stable Diffusion, Titan Image Generator).</li>
+        <li><span class="term">GANs</span>: dos redes (generador vs discriminador) compiten para producir datos realistas.</li>
+      </ul>`},
+    {h:'Ciclo de vida de un modelo GenAI', html:`
+      <p>Selección de datos → selección del modelo → <b>pre-training</b> → <b>fine-tuning</b> → <b>evaluación</b> → <b>despliegue</b> → <b>feedback</b>. El feedback retroalimenta el ciclo: por eso es <b>iterativo</b>.</p>`},
+    {h:'Riesgos y límites (¡muy preguntado!)', html:`
+      <ul>
+        <li><span class="term">Alucinaciones</span>: información que suena plausible pero es <b>incorrecta</b>.</li>
+        <li><span class="term">No determinismo</span>: puede dar respuestas <b>distintas</b> al mismo input.</li>
+        <li>Inexactitud heredada de los datos de entrenamiento.</li>
+        <li>Interpretabilidad limitada ("caja negra").</li>
+      </ul>
+      <div class="note warn">Si una pregunta describe "el modelo inventó datos" o "respuestas inconsistentes", la causa es alucinación / no determinismo — no un fallo de configuración.</div>`},
+    {h:'Servicios GenAI de AWS', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Para qué</th></tr>
+        <tr><td><span class="svc">Amazon Bedrock</span></td><td><b>El servicio principal.</b> Acceso a modelos de varios proveedores (Claude, Llama, Stability) por API unificada, sin gestionar servidores, pago por token.</td></tr>
+        <tr><td><span class="svc">Amazon Q</span></td><td>Asistente experto: <b>Q Business</b> (responde sobre documentos de la empresa) y <b>Q Developer</b> (código y tareas AWS).</td></tr>
+        <tr><td><span class="svc">SageMaker JumpStart</span></td><td>Catálogo de modelos pre-entrenados para perfiles <b>técnicos</b> que quieren control del entrenamiento/despliegue.</td></tr>
+        <tr><td><span class="svc">PartyRock</span></td><td>"Patio de juegos" sobre Bedrock para crear apps de IA <b>sin código</b> — prototipos rápidos, usuarios no técnicos.</td></tr>
+      </table>`},
+    {h:'Cómo elegir el modelo correcto', html:`
+      <ul>
+        <li>Tipo de modelo (texto / imagen / multimodal).</li>
+        <li>Rendimiento y latencia.</li>
+        <li>Restricciones de datos (información sensible).</li>
+        <li>Cumplimiento normativo.</li>
+        <li><b>Costo</b> (se cobra por token).</li>
+      </ul>
+      <div class="note tip">Un buen <b>prompt</b> lleva: <b>rol + contexto + tarea específica + formato de salida</b>.</div>`},
+    {h:'Novedades agénticas (2026)', html:`
+      <ul>
+        <li><span class="term">Context Engineering</span>: gestionar TODO el contexto que recibe el modelo (historial, documentos, herramientas, memoria), no solo el prompt individual.</li>
+        <li><span class="svc">Bedrock AgentCore</span>: plataforma para <b>operar agentes en producción</b> (runtime serverless, memoria, identidad, gateway de herramientas, observabilidad). Funciona con cualquier framework y modelo.</li>
+        <li><span class="svc">Strands Agents</span>: framework open source de AWS para construir agentes con pocas líneas; se integra con AgentCore.</li>
+        <li><span class="svc">Amazon Quick</span>: evolución agéntica de Q Business — no solo responde, <b>ejecuta acciones</b> de varios pasos.</li>
+        <li><span class="svc">Kiro</span>: IDE agéntico de AWS con "spec-driven development" (requisitos → especificación → código, pruebas y docs).</li>
+      </ul>`},
+  ]
+},
+{
+  id:'d3',
+  chip:'D3 · Aplicación',
+  title:'Dominio 3 · Aplicación de modelos fundacionales (28%)',
+  lead:'El dominio más pesado. Aquí viven los parámetros de inferencia, RAG vs fine-tuning, prompting, agentes y evaluación. Domínalo bien.',
+  sections:[
+    {h:'El "trilema" al elegir un modelo', html:`
+      <p>Siempre se balancean tres cosas: <b>Costo</b> vs <b>Latencia</b> vs <b>Calidad</b> (incluye soporte multilenguaje). No existe el modelo perfecto en las tres.</p>
+      <ul>
+        <li><span class="term">Ventana de contexto</span>: máximo de tokens (input + output) que el modelo "ve" en una interacción.</li>
+        <li><span class="term">Prompt caching</span>: guarda el procesamiento de partes repetidas del prompt → reduce latencia y costo en llamadas repetidas.</li>
+      </ul>`},
+    {h:'Parámetros de inferencia (memorízalos)', html:`
+      <table class="tbl">
+        <tr><th>Parámetro</th><th>Qué hace</th></tr>
+        <tr><td><span class="term">Temperature</span></td><td>Aleatoriedad. <b>Baja (≈0)</b> → respuestas consistentes/deterministas. <b>0.7–1</b> → más creatividad.</td></tr>
+        <tr><td><span class="term">Top-K</span></td><td>Restringe a los K tokens más probables (número <b>fijo</b>).</td></tr>
+        <tr><td><span class="term">Top-P</span> (nucleus)</td><td>Elige el conjunto mínimo cuya probabilidad acumulada ≥ P (número <b>variable</b>).</td></tr>
+        <tr><td><span class="term">Max tokens</span></td><td>Limita la longitud de la respuesta.</td></tr>
+        <tr><td><span class="term">Stop sequences</span></td><td>Secuencias que, al aparecer, detienen la generación.</td></tr>
+      </table>
+      <div class="note warn"><b>Clave de examen:</b> temperature, top-k y top-p <b>NO afectan el costo ni la latencia</b>, solo la aleatoriedad. El precio depende de la <b>cantidad de tokens</b>. Para reportes financieros/consistencia → temperature baja.</div>`},
+    {h:'RAG vs Fine-tuning (la comparación estrella)', html:`
+      <table class="tbl">
+        <tr><th></th><th>RAG</th><th>Fine-tuning</th></tr>
+        <tr><td>Qué hace</td><td>Recupera info externa <b>al momento</b> de responder</td><td>Reentrena los <b>pesos</b> del modelo</td></tr>
+        <tr><td>Ideal para</td><td>Datos que <b>cambian</b> a menudo, documentos privados/actualizables</td><td>Cambiar <b>tono/estilo/dominio</b> especializado</td></tr>
+        <tr><td>Costo</td><td>Bajo, sin reentrenar</td><td>Moderado/alto</td></tr>
+        <tr><td>En AWS</td><td><span class="svc">Bedrock Knowledge Bases</span> orquesta el flujo</td><td>Fine-tuning en Bedrock/SageMaker</td></tr>
+      </table>
+      <div class="note tip">Regla rápida: <b>"datos que cambian" → RAG</b> · <b>"tono/formato/especialización" → fine-tuning</b>.</div>`},
+    {h:'Bases de datos vectoriales en AWS', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Cuándo</th></tr>
+        <tr><td><span class="svc">OpenSearch Service</span></td><td>Búsqueda vectorial a gran escala / alta concurrencia.</td></tr>
+        <tr><td><span class="svc">Aurora / RDS PostgreSQL + pgvector</span></td><td>Ya usas SQL y quieres simplicidad, sin migrar de motor.</td></tr>
+        <tr><td><span class="svc">Neptune</span></td><td>Modelar <b>relaciones</b> entre documentos (grafos).</td></tr>
+        <tr><td><span class="svc">DocumentDB</span></td><td>Datos JSON, compatible con MongoDB.</td></tr>
+      </table>`},
+    {h:'Niveles de personalización (de barato a caro)', html:`
+      <ul>
+        <li><span class="term">Prompt engineering</span>: el más económico y rápido. No toca los pesos.</li>
+        <li><span class="term">In-Context Learning</span>: das ejemplos dentro del prompt. Sin tocar pesos, bajo costo.</li>
+        <li><span class="term">Fine-tuning</span>: ajusta pesos con datos específicos. Costo moderado.</li>
+        <li><span class="term">Continuous pre-training</span>: sigue entrenando un modelo existente con datos nuevos.</li>
+        <li><span class="term">Pre-training desde cero</span>: control absoluto, costo extremo.</li>
+      </ul>
+      <h4>Técnicas de fine-tuning que debes conocer</h4>
+      <ul>
+        <li><span class="term">RLHF</span>: humanos califican respuestas y esa señal ajusta el modelo hacia las <b>preferencias humanas</b> (tono, utilidad).</li>
+        <li><span class="term">Instruction tuning</span>: entrena con pares instrucción→respuesta para que siga mejor las instrucciones.</li>
+        <li><span class="term">Distillation</span>: entrena un modelo pequeño ("estudiante") para imitar a uno grande ("maestro") con menor costo/latencia.</li>
+      </ul>`},
+    {h:'Tipos de prompting', html:`
+      <ul>
+        <li><span class="term">Zero-shot</span>: sin ejemplos.</li>
+        <li><span class="term">Single-shot</span>: un ejemplo.</li>
+        <li><span class="term">Few-shot</span>: 2–5 ejemplos.</li>
+        <li><span class="term">Chain-of-thought</span>: pide razonamiento paso a paso.</li>
+        <li><span class="term">Prompt templates</span>: estructuras reutilizables.</li>
+        <li><span class="term">Negative prompt</span>: indica qué NO debe incluir.</li>
+        <li><span class="term">Prompt routing</span>: dirige la solicitud al modelo/flujo más adecuado.</li>
+      </ul>
+      <div class="note"><span class="svc">Bedrock Prompt Management</span> permite versionar y gestionar prompts de forma centralizada (crear versiones, probarlas, desplegarlas).</div>`},
+    {h:'Riesgos de los prompts', html:`
+      <ul>
+        <li><span class="term">Prompt injection / hijacking</span>: instrucciones maliciosas metidas en el input del usuario para cambiar el comportamiento. Se mitiga con <span class="svc">Bedrock Guardrails</span>.</li>
+        <li><span class="term">Prompt exposure</span>: se filtran instrucciones confidenciales del sistema.</li>
+        <li><span class="term">Jailbreaking</span>: evadir las restricciones de seguridad del modelo.</li>
+        <li><span class="term">Poisoning</span>: ataque a los datos de entrenamiento.</li>
+      </ul>`},
+    {h:'Agentes y MCP', html:`
+      <ul>
+        <li><span class="term">Agente</span>: completa tareas multi-paso usando herramientas externas, decidiendo qué usar y en qué orden.</li>
+        <li><span class="svc">Agents for Bedrock</span>: implementación de AWS.</li>
+        <li><span class="term">MCP</span>: estándar abierto para conectar agentes con herramientas externas; reduce el esfuerzo de integración.</li>
+      </ul>`},
+    {h:'Evaluación de modelos y aplicaciones', html:`
+      <ul>
+        <li><span class="svc">Bedrock Model Evaluation</span>: evaluaciones automáticas y con revisores humanos desde la consola, sin infraestructura propia.</li>
+        <li><span class="term">ROUGE</span> → resúmenes (superposición con referencia; ROUGE-L: subsecuencia común más larga).</li>
+        <li><span class="term">BLEU</span> → traducción (n-gramas vs referencia).</li>
+        <li><span class="term">BERTScore</span> → equivalencia <b>semántica</b> vía embeddings.</li>
+        <li><span class="term">LLM-as-a-judge</span>: usar OTRO modelo para calificar respuestas con más matiz que ROUGE/BLEU, y a mayor escala que humanos.</li>
+        <li><span class="term">Benchmark datasets</span>: datasets estándar (MMLU, HumanEval) para medir de forma objetiva.</li>
+      </ul>
+      <div class="note tip">No basta con evaluar el modelo aislado: en RAG o agentes hay que evaluar el <b>sistema completo</b> (¿recupera los documentos correctos? ¿ejecuta los pasos correctos?). Métricas de negocio: task completion rate, user satisfaction, cost per interaction.</div>`},
+  ]
+},
+{
+  id:'d4',
+  chip:'D4 · Responsable',
+  title:'Dominio 4 · IA responsable (14%)',
+  lead:'Sesgo, equidad, explicabilidad y transparencia — y las herramientas de AWS para lograrlas.',
+  sections:[
+    {h:'Dimensiones de la IA responsable', html:`
+      <ul>
+        <li><span class="term">Bias (sesgo)</span>: trato desigual a grupos; viene de los <b>datos</b>.</li>
+        <li><span class="term">Fairness (equidad)</span>: decisiones consistentes sin importar datos sensibles.</li>
+        <li><span class="term">Inclusivity</span>: funciona bien para todos los grupos.</li>
+        <li><span class="term">Robustness</span>: sigue funcionando ante entradas inusuales.</li>
+        <li><span class="term">Safety</span>: no causa daño ni pone en riesgo a personas.</li>
+        <li><span class="term">Veracity</span>: es honesto, reconoce cuando no sabe.</li>
+      </ul>
+      <p>Principios oficiales de AWS: <b>Fairness, Explainability, Privacy &amp; Security, Robustness, Governance, Transparency, Safety, Veracity &amp; Controllability</b>.</p>`},
+    {h:'Sesgo y varianza: causa y efecto', html:`
+      <ul>
+        <li>Sesgo en los <b>datos</b> → errores sistemáticos (subrepresenta grupos).</li>
+        <li>Alta <b>varianza</b> → overfitting.</li>
+        <li>Alto sesgo + baja varianza → underfitting.</li>
+      </ul>`},
+    {h:'Transparencia vs Explicabilidad', html:`
+      <table class="tbl">
+        <tr><th>Transparencia</th><th>Explicabilidad</th></tr>
+        <tr><td>Ver <b>cómo está construido</b> el modelo (arquitectura, datos, parámetros).</td><td>Entender <b>por qué</b> tomó una decisión específica.</td></tr>
+      </table>
+      <p>"Caja negra" = ni transparencia ni explicabilidad. <span class="svc">SageMaker Model Cards</span> documenta ambas.</p>`},
+    {h:'Herramientas de AWS', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Para qué</th></tr>
+        <tr><td><span class="svc">SageMaker Clarify</span></td><td>Detecta <b>sesgo</b> (pre y post-entrenamiento) y <b>explica</b> predicciones con feature attribution (<b>valores SHAP</b>: cuánto pesa cada variable).</td></tr>
+        <tr><td><span class="svc">SageMaker Model Monitor</span></td><td>Vigila el <b>drift</b> en producción (cuándo se degrada el modelo). Alerta vía CloudWatch.</td></tr>
+        <tr><td><span class="svc">Amazon A2I</span></td><td>Augmented AI: envía a <b>revisión humana</b> los casos de baja confianza o error inaceptable.</td></tr>
+        <tr><td><span class="svc">Bedrock Guardrails</span></td><td>Define límites del comportamiento en tiempo real (filtros de contenido, temas denegados, protección de PII).</td></tr>
+      </table>
+      <div class="note tip"><b>Clarify</b> = sesgo + el "por qué" (SHAP). <b>Model Monitor</b> = vigilancia en producción. Se integran: Clarify detecta, Model Monitor alerta.</div>`},
+    {h:'Riesgos legales y diseño centrado en el humano', html:`
+      <ul>
+        <li>Infracción de propiedad intelectual (salidas similares a obras protegidas).</li>
+        <li>Salidas sesgadas → demandas por discriminación.</li>
+        <li>Alucinaciones en salud/finanzas → responsabilidad legal.</li>
+      </ul>
+      <p>Diseño centrado en el humano: incorporar <b>feedback del usuario</b> y priorizar la <b>transparencia</b> desde el diseño, no como parche técnico posterior.</p>`},
+  ]
+},
+{
+  id:'d5',
+  chip:'D5 · Seguridad',
+  title:'Dominio 5 · Seguridad, cumplimiento y gobernanza (14%)',
+  lead:'Cómo proteger, auditar y gobernar soluciones de IA en AWS, y qué ataques específicos amenazan a los modelos.',
+  sections:[
+    {h:'Servicios de seguridad base', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Para qué</th></tr>
+        <tr><td><span class="svc">IAM</span></td><td>Controla accesos (principio de <b>mínimo privilegio</b>).</td></tr>
+        <tr><td><span class="svc">KMS</span></td><td>Crea/controla claves de <b>cifrado</b> y su rotación.</td></tr>
+        <tr><td><span class="svc">Macie</span></td><td>Usa ML para <b>descubrir datos sensibles (PII)</b> en S3.</td></tr>
+        <tr><td><span class="svc">PrivateLink</span></td><td>Conecta apps con servicios de AWS por <b>red privada</b>, sin salir a internet.</td></tr>
+        <tr><td><span class="svc">VPC / Security Groups</span></td><td>Aísla recursos en red privada; los SG controlan el tráfico permitido.</td></tr>
+        <tr><td><span class="svc">Shield</span></td><td>Protege contra ataques <b>DDoS</b>.</td></tr>
+      </table>`},
+    {h:'Modelo de responsabilidad compartida', html:`
+      <table class="tbl">
+        <tr><th>AWS — seguridad DE la nube</th><th>Cliente — seguridad EN la nube</th></tr>
+        <tr><td>Infraestructura física, hardware, virtualización.</td><td>Configuración, datos, accesos, modelos, código.</td></tr>
+      </table>`},
+    {h:'Auditoría y monitoreo (no los confundas)', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Responde a…</th></tr>
+        <tr><td><span class="svc">Config</span></td><td><b>Cómo</b> está configurado y <b>qué cambió</b> (estado de recursos).</td></tr>
+        <tr><td><span class="svc">CloudTrail</span></td><td><b>Quién</b> hizo <b>qué</b> (auditoría de llamadas a la API).</td></tr>
+        <tr><td><span class="svc">CloudWatch</span></td><td><b>Cómo se desempeña</b> (métricas y logs).</td></tr>
+      </table>
+      <div class="note">"¿Quién llamó a la API y cuándo?" → <b>CloudTrail</b>. "¿Qué métricas/logs de rendimiento?" → <b>CloudWatch</b>. "¿Qué cambió en la config?" → <b>Config</b>.</div>`},
+    {h:'Cumplimiento y buenas prácticas', html:`
+      <table class="tbl">
+        <tr><th>Servicio</th><th>Para qué</th></tr>
+        <tr><td><span class="svc">Inspector</span></td><td>Escanea vulnerabilidades en código/infra automáticamente.</td></tr>
+        <tr><td><span class="svc">Audit Manager</span></td><td>Automatiza la <b>evidencia de auditoría</b> para cumplimiento (GDPR, HIPAA, ISO 27001).</td></tr>
+        <tr><td><span class="svc">Artifact</span></td><td>Repositorio de informes de cumplimiento y certificaciones de AWS.</td></tr>
+        <tr><td><span class="svc">Trusted Advisor</span></td><td>Recomendaciones en 5 áreas: seguridad, rendimiento, costo, tolerancia a fallos y límites de servicio.</td></tr>
+      </table>`},
+    {h:'Ataques específicos a modelos de IA', html:`
+      <ul>
+        <li><span class="term">Prompt injection</span>: instrucciones maliciosas vía input (mitiga: <span class="svc">Guardrails</span>).</li>
+        <li><span class="term">Jailbreaking</span>: evadir restricciones de seguridad.</li>
+        <li><span class="term">Data poisoning</span>: envenenar datos de entrenamiento.</li>
+        <li><span class="term">Model inversion / extraction</span>: reconstruir datos de entrenamiento o el propio modelo a partir de sus salidas.</li>
+      </ul>`},
+    {h:'Gobernanza de datos y de agentes', html:`
+      <ul>
+        <li><span class="term">Data lineage</span>: rastrea el <b>origen y recorrido</b> de los datos (auditar decisiones).</li>
+        <li><span class="term">Data cataloging</span>: inventario organizado de todos los datos.</li>
+        <li>Políticas de <b>ciclo de vida de S3</b>: transición entre clases de almacenamiento, expiración → gobernanza automática.</li>
+        <li><span class="term">Generative AI Security Scoping Matrix</span>: marco de AWS que califica apps GenAI por nivel de riesgo (según quién interactúa y qué datos procesa).</li>
+        <li><span class="svc">AgentCore Identity/Policy</span>: identidad y control de acceso <b>granular</b> para agentes autónomos.</li>
+      </ul>`},
+    {h:'Exactitud, grounding y filtrado de salida', html:`
+      <ul>
+        <li><span class="term">RAG grounding</span>: anclar respuestas a fuentes recuperadas <b>verificables</b>.</li>
+        <li><span class="term">Output validation</span>: validar la salida antes de mostrarla.</li>
+        <li><span class="term">Confidence scoring</span>: medir qué tan segura está la respuesta.</li>
+        <li><span class="term">Filtrado de toxicidad</span>: bloquear contenido dañino antes de llegar al usuario.</li>
+        <li><b>Logging</b> de prompts/respuestas/decisiones para trazabilidad y cumplimiento (se apoya en CloudTrail/CloudWatch).</li>
+      </ul>`},
+  ]
+},
+];
+
+/* ================= FLASHCARDS DATA ================= */
+const CARDS = [
+// ---- D1 ----
+{d:'d1', f:'Algoritmo', b:'Conjunto de instrucciones/pasos para resolver un problema.'},
+{d:'d1', f:'Modelo', b:'Resultado de entrenar un algoritmo con datos; es lo que quedó "aprendido" y se usa para predecir.'},
+{d:'d1', f:'Inferencia', b:'Momento en que un modelo ya entrenado responde ante datos nuevos.'},
+{d:'d1', f:'Endpoint (SageMaker)', b:'Punto donde se publica un modelo para que otras aplicaciones lo consuman.'},
+{d:'d1', f:'Jerarquía: IA ⊃ ML ⊃ Deep Learning ⊃ GenAI ⊃ Agentic AI', b:'IA: sistemas que imitan capacidades humanas.\nML: aprende patrones de los datos sin programación explícita.\nDeep Learning: redes neuronales multicapa, más datos/cómputo, patrones complejos.\nGenAI: genera contenido nuevo (texto/imagen/audio).\nAgentic AI: GenAI que además actúa de forma autónoma (planifica, usa herramientas).'},
+{d:'d1', f:'Transfer Learning', b:'Tomar un modelo ya entrenado en una tarea y adaptarlo a una tarea nueva relacionada, sin entrenar desde cero. Ahorra tiempo, datos y costo.'},
+{d:'d1', f:'Aprendizaje supervisado vs no supervisado vs por refuerzo', b:'Supervisado: datos etiquetados (clasificación, regresión).\nNo supervisado: sin etiquetas, encuentra patrones (clustering, anomalías).\nPor refuerzo: ensayo y error con recompensas/castigos.'},
+{d:'d1', f:'Regresión lineal vs logística', b:'Lineal: ajusta una línea a datos numéricos → predice valores continuos.\nLogística: a pesar del nombre, se usa para clasificación (ej. spam/no spam); predice probabilidad 0-1.'},
+{d:'d1', f:'K-means', b:'Algoritmo de clustering no supervisado: agrupa datos sin etiquetas previas.'},
+{d:'d1', f:'Interpretabilidad: árboles vs redes', b:'Árboles de decisión / Random Forest: interpretables, explican cada decisión con reglas → buenos cuando hay que justificar (crédito, auditoría).\nRedes neuronales profundas: más precisas en patrones complejos pero "caja negra", difíciles de explicar.'},
+{d:'d1', f:'Overfitting vs Underfitting', b:'Overfitting: el modelo "memoriza" el training set y falla con datos nuevos → alta varianza. Soluciones: más datos, regularización, simplificar, data augmentation, early stopping.\nUnderfitting: modelo demasiado simple → alto sesgo. Solución: más complejidad/features, entrenar más.'},
+{d:'d1', f:'Amazon SageMaker Debugger', b:'Monitorea el entrenamiento en tiempo real y avisa si hay overfitting/underfitting.'},
+{d:'d1', f:'Los 4 tipos de inferencia', b:'Batch: procesa muchos registros a la vez, sin respuesta inmediata (Batch Transform).\nTiempo real: baja latencia, tráfico constante (Lex, Personalize).\nAsíncrona: inputs grandes (hasta 1GB), encola y entrega al terminar.\nServerless: tráfico intermitente/impredecible, no paga por infra ociosa.'},
+{d:'d1', f:'Textract vs Comprehend', b:'Textract: extrae el texto DE un documento escaneado (OCR, qué dice).\nComprehend: entiende el SIGNIFICADO del texto (sentimiento, entidades, PII). A menudo se usan juntos: Textract → Comprehend.'},
+{d:'d1', f:'¿Cuándo NO usar Machine Learning?', b:'Cuando se necesita exactitud absoluta/determinística, cuando ya existe una fórmula simple, o cuando la decisión pone en riesgo directo la vida de una persona sin supervisión humana.'},
+{d:'d1', f:'Accuracy, Precision, Recall, F1 Score', b:'Accuracy: % total de predicciones correctas.\nPrecision: de lo que el modelo dijo "positivo", cuánto era realmente positivo (evita falsos positivos).\nRecall: de todos los positivos reales, cuántos detectó el modelo (evita falsos negativos).\nF1 Score: media armónica entre precision y recall, útil cuando hay desbalance de clases.'},
+{d:'d1', f:'Métricas de modelo vs métricas de negocio', b:'Métricas de modelo: accuracy, precision, recall, F1 (miden desempeño técnico).\nMétricas de negocio: costo por usuario, costos de desarrollo, feedback del cliente, ROI (miden si el modelo realmente aporta valor al negocio).'},
+{d:'d1', f:'Fuentes de modelos fundacionales', b:'Modelos open source pre-entrenados (listos para usar/adaptar) vs. entrenar un modelo custom desde cero. La mayoría de casos de uso empresariales parten de modelos pre-entrenados por costo y tiempo.'},
+{d:'d1', f:'Métodos para usar un modelo en producción', b:'API administrada (managed API, ej. Amazon Bedrock: AWS gestiona la infraestructura) vs. self-hosted API (tú despliegas y gestionas el modelo, ej. en SageMaker o EC2, más control pero más responsabilidad operativa).'},
+{d:'d1', f:'Conceptos fundamentales de MLOps', b:'Experimentación estructurada, procesos repetibles, sistemas escalables, gestión de deuda técnica, alcanzar production readiness, monitoreo continuo del modelo, y re-entrenamiento periódico.'},
+
+// ---- D2 ----
+{d:'d2', f:'Token', b:'Pedazo de texto; puede ser una palabra completa o solo una parte de ella.'},
+{d:'d2', f:'Chunking', b:'Dividir un texto largo en fragmentos más pequeños.'},
+{d:'d2', f:'Embeddings / vectores', b:'Lista de números que representa el significado de un dato. Permiten comparar significados en vez de palabras exactas (búsqueda semántica).'},
+{d:'d2', f:'Transformer', b:'Arquitectura que permite a los modelos usar el contexto para identificar qué información es relevante.'},
+{d:'d2', f:'Modelo fundacional (Foundation Model)', b:'Modelo base entrenado a gran escala, adaptable a múltiples tareas.'},
+{d:'d2', f:'Modelos multimodales', b:'Entienden más de un tipo de dato en el mismo contexto (ej. texto + imagen).'},
+{d:'d2', f:'Modelos de difusión (Diffusion)', b:'Especializados en generar imágenes; parten de ruido aleatorio y lo "limpian" hasta formar la imagen (Stable Diffusion, Titan Image Generator).'},
+{d:'d2', f:'GANs', b:'Generative Adversarial Networks: dos redes (generador vs discriminador) compiten para producir datos realistas.'},
+{d:'d2', f:'Componentes de un buen prompt', b:'Rol, contexto, tarea específica, formato de salida.'},
+{d:'d2', f:'Ciclo de vida de un modelo GenAI', b:'Selección de datos → selección del modelo → pre-training → fine-tuning → evaluación → despliegue → feedback (retroalimenta el ciclo, por eso es iterativo).'},
+{d:'d2', f:'Riesgos/límites de la GenAI', b:'Alucinaciones, no determinismo (respuestas distintas al mismo input), inexactitud por datos de entrenamiento, interpretabilidad limitada.'},
+{d:'d2', f:'Amazon Bedrock', b:'Servicio principal de GenAI en AWS. Acceso a modelos de varios proveedores (Claude, Llama, Stability AI) vía API unificada, sin gestionar servidores, pago por token.'},
+{d:'d2', f:'Amazon Q', b:'Asistente experto de AWS: Q Business (responde sobre documentos de la empresa) y Q Developer (ayuda con código y tareas de AWS).'},
+{d:'d2', f:'SageMaker JumpStart', b:'Catálogo de modelos pre-entrenados para perfiles técnicos que quieren más control sobre entrenamiento y despliegue.'},
+{d:'d2', f:'PartyRock', b:'"Patio de juegos" basado en Bedrock para crear apps de IA sin programar — ideal para prototipos rápidos, "sin código".'},
+{d:'d2', f:'¿Cómo elegir el modelo correcto?', b:'Tipo de modelo (texto/imagen/multimodal), rendimiento/latencia, restricciones (datos sensibles), cumplimiento normativo, costo (se cobra por token).'},
+{d:'d2', f:'Métricas de éxito de negocio en GenAI', b:'Eficiencia, tasa de conversión, customer lifetime value, exactitud. Las métricas de NEGOCIO son las que justifican el proyecto.'},
+{d:'d2', f:'Context Engineering', b:'Disciplina más amplia que el prompt engineering: diseñar y gestionar TODO el contexto que recibe el modelo (historial, documentos recuperados, herramientas disponibles, memoria), no solo el texto del prompt individual.'},
+{d:'d2', f:'Patrones de IA agéntica (multi-agente)', b:'Multi-agent system patterns: varios agentes especializados colaborando.\nMemory management: cómo el agente recuerda contexto entre pasos/sesiones.\nTool usage: cómo decide qué herramienta invocar.\nWorkflow orchestration: cómo se coordinan los pasos de principio a fin.\nComunicación multi-agente: cómo los agentes se pasan información entre sí (ej. protocolo A2A).'},
+{d:'d2', f:'Amazon Bedrock AgentCore', b:'Plataforma de AWS (2026) para desplegar y operar agentes de IA en producción a escala empresarial: runtime serverless, gestión de memoria, identidad/seguridad, gateway para conectar herramientas, y observabilidad. Funciona con cualquier framework (LangGraph, CrewAI, Strands) y cualquier modelo.'},
+{d:'d2', f:'Strands Agents', b:'Framework open source de AWS para construir y orquestar agentes de IA (single-agent hasta sistemas multi-agente complejos) con pocas líneas de código. Se integra de forma nativa con Amazon Bedrock AgentCore.'},
+{d:'d2', f:'Amazon Quick', b:'Evolución de Amazon Q Business (2026): asistente de IA agéntico para trabajo de oficina que no solo responde preguntas sino que ejecuta acciones/flujos de varios pasos, conectando datos de toda la empresa (documentos, apps, bases de datos).'},
+{d:'d2', f:'Kiro', b:'IDE agéntico de AWS para desarrollo de software basado en "spec-driven development": convierte requisitos en especificaciones y luego en código funcional, pruebas y documentación. Sustituye a Amazon Q Developer como asistente de código de AWS.'},
+
+// ---- D3 ----
+{d:'d3', f:'El "trilema" al elegir un modelo fundacional', b:'Costo vs Latencia vs Calidad/soporte multilenguaje — siempre hay que balancear los tres.'},
+{d:'d3', f:'Ventana de contexto', b:'Cantidad máxima de tokens (input + output) que el modelo puede "ver" en una sola interacción.'},
+{d:'d3', f:'Prompt caching', b:'Guarda en memoria el procesamiento de partes repetidas de un prompt; reduce latencia y costo en llamadas repetidas.'},
+{d:'d3', f:'Temperature', b:'Controla la distribución de probabilidad al elegir el siguiente token. Baja → respuestas consistentes/deterministas. 0.7–1 → más creatividad.'},
+{d:'d3', f:'Top-K vs Top-P', b:'Top-K: restringe a los K tokens más probables (número FIJO).\nTop-P (nucleus sampling): elige dinámicamente el conjunto mínimo cuya probabilidad acumulada suma ≥ P (número VARIABLE).'},
+{d:'d3', f:'Max tokens y Stop sequences', b:'Max tokens: limita la longitud de la respuesta.\nStop sequences: secuencias que, al aparecer, detienen la generación.'},
+{d:'d3', f:'¿Los parámetros de inferencia afectan el costo?', b:'No: temperature, top-k y top-p NO afectan precio ni latencia, solo la aleatoriedad/creatividad. El precio depende de la cantidad de tokens.'},
+{d:'d3', f:'RAG (Retrieval-Augmented Generation)', b:'El modelo recupera información relevante de una fuente externa antes de responder. En AWS: Amazon Bedrock Knowledge Bases orquesta el flujo. Ideal para datos que cambian frecuentemente o documentos privados.'},
+{d:'d3', f:'RAG vs Fine-tuning', b:'RAG = añadir conocimiento externo/actualizable sin reentrenar (consulta datos al momento).\nFine-tuning = cambiar el comportamiento/estilo reentrenando los pesos.\n"Datos que cambian" → RAG · "tono/formato/dominio especializado" → fine-tuning.'},
+{d:'d3', f:'Bases de datos vectoriales en AWS', b:'OpenSearch Service: búsqueda vectorial a gran escala/alta concurrencia.\nAurora/RDS PostgreSQL + pgvector: ya usas SQL y quieres simplicidad.\nNeptune: modelar relaciones entre documentos (grafos).\nDocumentDB: datos en formato JSON, compatible con MongoDB.'},
+{d:'d3', f:'Agentes y MCP', b:'Un agente completa tareas multi-paso usando herramientas externas, decidiendo qué usar y en qué orden. Agents for Bedrock: implementación de AWS. MCP: estándar abierto para conectar agentes con herramientas externas, reduce el esfuerzo de integración.'},
+{d:'d3', f:'Trade-offs de personalización del modelo', b:'Pre-training: desde cero, control absoluto, costo extremo.\nFine-tuning: ajusta pesos con datos específicos, costo moderado.\nIn-Context Learning: ejemplos en el prompt, sin tocar pesos, bajo costo.\nPrompt engineering: el más económico y rápido.'},
+{d:'d3', f:'Negative prompt / Latent space / Prompt routing', b:'Negative prompt: indica qué NO debe hacer/incluir el modelo.\nLatent space: espacio matemático donde el modelo "guarda" lo aprendido.\nPrompt routing: capa que dirige la solicitud al modelo/flujo más adecuado.'},
+{d:'d3', f:'Tipos de prompting', b:'Zero-shot: sin ejemplos.\nSingle-shot: un ejemplo.\nFew-shot: 2-5 ejemplos.\nChain-of-thought: pide razonamiento paso a paso.\nPrompt templates: estructuras reutilizables.'},
+{d:'d3', f:'Riesgos de los prompts', b:'Exposure: se filtran instrucciones confidenciales del prompt (mitiga: Bedrock Guardrails).\nPoisoning: ataque al entrenamiento.\nHijacking: instrucciones maliciosas inyectadas en el prompt.\nJailbreaking: evadir las restricciones de seguridad del modelo.'},
+{d:'d3', f:'Distillation (destilación)', b:'Entrenar un modelo pequeño ("estudiante") para replicar el comportamiento de uno grande ("maestro"), con menor costo/latencia.'},
+{d:'d3', f:'Continuous pre-training', b:'Seguir entrenando un modelo existente con datos nuevos (sin partir de cero) para actualizarlo o especializarlo.'},
+{d:'d3', f:'Amazon Bedrock Model Evaluation', b:'Herramienta integrada en Bedrock para ejecutar evaluaciones automáticas y con revisores humanos desde la consola, sin construir infraestructura propia.'},
+{d:'d3', f:'Métricas automáticas: ROUGE / BLEU / BERTScore', b:'ROUGE → resúmenes (superposición con referencia humana; ROUGE-L: subsecuencia común más larga).\nBLEU → traducción (n-gramas vs referencia).\nBERTScore → equivalencia semántica vía embeddings.'},
+{d:'d3', f:'Benchmark datasets', b:'Datasets estándar de la industria para medir capacidades del modelo de forma objetiva y reproducible (ej. MMLU, HumanEval).'},
+{d:'d3', f:'Buenas prácticas de prompt engineering', b:'Mejorar la calidad de respuesta iterando, experimentar activamente, usar guardrails, ser específico y conciso, y estructurar prompts complejos con múltiples instrucciones/comentarios claros.'},
+{d:'d3', f:'Amazon Bedrock Prompt Management', b:'Funcionalidad de Bedrock para versionar y gestionar prompts de forma centralizada (crear versiones, probarlas, desplegarlas), evitando prompts "sueltos" y no controlados en el código.'},
+{d:'d3', f:'RLHF (Reinforcement Learning from Human Feedback)', b:'Técnica de fine-tuning donde humanos califican las respuestas del modelo y esa retroalimentación se usa como señal de recompensa para ajustar el modelo hacia respuestas más alineadas con las preferencias humanas.'},
+{d:'d3', f:'Instruction tuning', b:'Tipo de fine-tuning donde el modelo se entrena con ejemplos de instrucción→respuesta deseada, para que siga mejor instrucciones explícitas en lenguaje natural.'},
+{d:'d3', f:'LLM-as-a-judge', b:'Método de evaluación donde se usa OTRO modelo de lenguaje (más grande o especializado) para calificar/comparar las respuestas de un modelo evaluado, en vez de depender solo de evaluadores humanos.'},
+{d:'d3', f:'Evaluar aplicaciones construidas con FMs (RAG, agentes, workflows)', b:'No basta con evaluar el modelo aislado: hay que evaluar el sistema completo (ej. si el RAG recupera los documentos correctos, si el agente ejecuta la secuencia de pasos correcta).'},
+{d:'d3', f:'Métricas de alineación con objetivos de negocio', b:'Task completion rate (% de tareas completadas exitosamente), user satisfaction, cost per interaction — conectan el desempeño técnico del modelo con el valor real para el negocio.'},
+
+// ---- D4 ----
+{d:'d4', f:'Bias, Fairness, Inclusivity', b:'Bias: trato desigual a grupos, viene de los datos.\nFairness: decisiones consistentes sin importar datos sensibles.\nInclusivity: funciona bien para todos los grupos (y tipos de dato).'},
+{d:'d4', f:'Robustness, Safety, Veracity', b:'Robustness: sigue funcionando ante entradas inusuales.\nSafety: no causa daño ni pone en riesgo a personas.\nVeracity: es honesto, reconoce cuando no sabe algo.'},
+{d:'d4', f:'Riesgos legales de la GenAI', b:'Infracción de propiedad intelectual (contenido similar a obras protegidas), salidas sesgadas (demandas por discriminación), riesgo al usuario final (alucinaciones en salud/finanzas → responsabilidad legal).'},
+{d:'d4', f:'Sesgo y varianza: causa y efecto', b:'Sesgo en los datos → errores sistemáticos (subrepresenta grupos).\nAlta varianza → overfitting.\nBajo varianza + alto sesgo → underfitting.'},
+{d:'d4', f:'Amazon SageMaker Clarify', b:'Detecta sesgo (pre y post-entrenamiento) y explica predicciones con feature attribution (valores SHAP): cuánto pesa cada variable en una decisión.'},
+{d:'d4', f:'SageMaker Model Monitor vs Clarify', b:'Model Monitor: vigila drift en PRODUCCIÓN (cuándo se degrada el modelo).\nClarify: sesgo + explicabilidad (el "por qué"). Se integran: Clarify detecta, Model Monitor alerta vía CloudWatch.'},
+{d:'d4', f:'Amazon Augmented AI (A2I)', b:'Cuando el modelo tiene baja confianza o el error es inaceptable, envía esos casos automáticamente a revisión humana.'},
+{d:'d4', f:'Amazon Bedrock Guardrails', b:'Define los límites del comportamiento del modelo en tiempo real (filtros de contenido, temas denegados, protección de PII).'},
+{d:'d4', f:'Principios oficiales de IA Responsable de AWS', b:'Fairness, Explainability, Privacy & Security, Robustness, Governance, Transparency, Safety, Veracity & Controllability.'},
+{d:'d4', f:'Transparencia vs Explicabilidad', b:'Transparencia: puedes ver cómo está construido el modelo (arquitectura, datos, parámetros).\nExplicabilidad: además entiendes POR QUÉ tomó una decisión específica. "Caja negra" = ni transparencia ni explicabilidad. SageMaker Model Cards documenta ambas.'},
+{d:'d4', f:'Diseño centrado en el humano para IA explicable', b:'Incorporar mecanismos de feedback del usuario y priorizar la transparencia de las decisiones de la IA desde el diseño de la aplicación, no solo como una capa técnica añadida después.'},
+
+// ---- D5 ----
+{d:'d5', f:'AWS IAM, KMS, Macie, PrivateLink', b:'IAM: controla accesos (mínimo privilegio).\nKMS: crea/controla claves de cifrado y su rotación.\nMacie: usa ML para descubrir datos sensibles (PII) en S3.\nPrivateLink: conecta apps a servicios de AWS por red privada, sin salir a internet.'},
+{d:'d5', f:'Modelo de responsabilidad compartida', b:'AWS: seguridad DE la nube (infraestructura física, hardware, virtualización).\nCliente: seguridad EN la nube (configuración, datos, accesos, modelos, código).'},
+{d:'d5', f:'Data lineage vs Data cataloging', b:'Data lineage: rastrea el origen y recorrido de los datos (para auditar decisiones incorrectas).\nData cataloging: inventario organizado de todos los datos de la empresa.'},
+{d:'d5', f:'Prompt injection y otros ataques', b:'Prompt injection: instrucciones maliciosas vía el input del usuario (mitiga: Bedrock Guardrails).\nJailbreaking: evadir restricciones de seguridad.\nData poisoning: envenenar datos de entrenamiento.\nModel inversion/extraction: reconstruir datos de entrenamiento o el modelo a partir de sus salidas.'},
+{d:'d5', f:'VPC, Security Groups, Shield', b:'VPC: aísla recursos de IA en red privada virtual.\nSecurity Groups: controlan el tráfico de red permitido.\nShield: protege contra ataques DDoS.'},
+{d:'d5', f:'AWS Config vs CloudTrail vs CloudWatch', b:'Config: CÓMO está configurado y qué cambió (estado de recursos).\nCloudTrail: QUIÉN hizo QUÉ (auditoría de llamadas a la API).\nCloudWatch: CÓMO se está desempeñando (métricas y logs).'},
+{d:'d5', f:'Amazon Inspector, Audit Manager, Artifact', b:'Inspector: escanea vulnerabilidades en código/infraestructura automáticamente.\nAudit Manager: automatiza evidencia de auditoría para cumplimiento (GDPR, HIPAA, ISO 27001).\nArtifact: repositorio de informes de cumplimiento y certificaciones de AWS.'},
+{d:'d5', f:'AWS Trusted Advisor', b:'Analiza tu cuenta y da recomendaciones en 5 áreas: seguridad, rendimiento, costo, tolerancia a fallos y límites de servicio.'},
+{d:'d5', f:'Generative AI Security Scoping Matrix', b:'Marco de AWS que califica las apps de IA generativa por nivel de riesgo, según quién interactúa con el modelo y qué datos procesa.'},
+{d:'d5', f:'Políticas de ciclo de vida de S3', b:'Automatizan el ciclo completo de los datos: transición entre clases de almacenamiento, expiración, etc. Clave para la gobernanza de datos.'},
+{d:'d5', f:'Amazon Bedrock AgentCore Identity y Policy', b:'AgentCore Identity: gestiona la identidad y autenticación de cada agente (quién es, qué credenciales usa).\nPolicy en AgentCore: define qué puede hacer un agente y a qué herramientas/recursos puede acceder — control de acceso granular para agentes autónomos.'},
+{d:'d5', f:'Detección de alucinaciones y "grounding"', b:'Técnicas para mejorar la exactitud de las salidas: RAG grounding (anclar respuestas a fuentes recuperadas verificables), output validation (validar la salida antes de mostrarla), confidence scoring (medir qué tan segura está la respuesta del modelo).'},
+{d:'d5', f:'Toxicidad y filtrado de salida', b:'Detectar y bloquear contenido tóxico, dañino o inapropiado en las respuestas del modelo antes de que lleguen al usuario final — parte de las consideraciones de seguridad y privacidad en producción.'},
+{d:'d5', f:'Auditoría y logging de interacciones de IA', b:'Registrar de forma sistemática las interacciones con sistemas de IA (prompts, respuestas, decisiones del agente) para trazabilidad, cumplimiento y detección de mal uso — se apoya en CloudTrail/CloudWatch.'},
+];
+
+/* ================= PRACTICE QUESTIONS ================= */
+const QUESTIONS = [
+{d:'d1', q:'Un equipo quiere detectar transacciones fraudulentas y necesita poder explicar a un auditor, en lenguaje simple, por qué cada transacción fue marcada. ¿Qué tipo de algoritmo encaja mejor con este requisito?',
+ opts:['Red neuronal profunda (deep learning)','Árbol de decisión / Random Forest','K-means','Modelo de difusión'],
+ correct:1,
+ exp:'Los árboles de decisión son interpretables por naturaleza (reglas de sí/no en cascada), lo que facilita explicar cada clasificación a un auditor. Las redes profundas y los modelos de difusión son mucho menos explicables ("caja negra"), y K-means es un algoritmo de clustering no supervisado, no de clasificación.'},
+{d:'d1', q:'Un modelo obtiene 99% de exactitud en el set de entrenamiento pero solo 62% con datos nuevos en producción. ¿Qué está ocurriendo y qué acción es más apropiada?',
+ opts:['Underfitting; se debe simplificar el modelo','Overfitting; se debe aplicar regularización o conseguir más datos','El modelo necesita menos épocas de entrenamiento','Es un problema de sesgo (bias), no de varianza'],
+ correct:1,
+ exp:'Alto desempeño en entrenamiento pero bajo en datos nuevos es la firma clásica de overfitting (alta varianza). Las soluciones típicas incluyen regularización, más datos de entrenamiento, simplificar el modelo o early stopping.'},
+{d:'d1', q:'Una empresa necesita procesar y responder solicitudes de un chatbot con la menor latencia posible y tráfico constante durante el día. ¿Qué tipo de inferencia de SageMaker es la más adecuada?',
+ opts:['Batch','Asíncrona','Serverless','Tiempo real'],
+ correct:3,
+ exp:'La inferencia en tiempo real está diseñada para baja latencia con tráfico constante y predecible, como en chatbots. Batch es para grandes volúmenes sin urgencia, asíncrona es para payloads grandes sin necesidad de respuesta inmediata, y serverless es ideal para tráfico intermitente/impredecible.'},
+{d:'d2', q:'Una empresa quiere que sus empleados no técnicos construyan prototipos de aplicaciones de IA generativa sin escribir código. ¿Qué servicio de AWS recomendarías?',
+ opts:['Amazon SageMaker JumpStart','PartyRock','Amazon Bedrock (API directa)','AWS Glue DataBrew'],
+ correct:1,
+ exp:'PartyRock es el "patio de juegos" construido sobre Bedrock pensado específicamente para crear apps de IA sin programar, ideal para prototipos rápidos por usuarios no técnicos. JumpStart y la API de Bedrock requieren más conocimiento técnico.'},
+{d:'d2', q:'¿Cuál de las siguientes es una limitación inherente de los modelos de IA generativa que debe comunicarse a los usuarios de negocio?',
+ opts:['Solo pueden procesar texto, nunca imágenes','Pueden generar el mismo resultado exacto siempre (determinismo total)','Pueden producir alucinaciones: información que suena plausible pero es incorrecta','Requieren siempre fine-tuning antes de poder usarse'],
+ correct:2,
+ exp:'Las alucinaciones son un riesgo bien documentado de los modelos generativos: producen contenido con apariencia de verdad pero incorrecto. Los modelos generativos suelen ser no deterministas (pueden dar respuestas distintas al mismo input), no lo opuesto.'},
+{d:'d3', q:'Una compañía tiene una base de conocimiento interna que cambia diariamente (políticas, precios) y quiere que su asistente de IA siempre responda con la información más actualizada, sin reentrenar el modelo. ¿Qué enfoque es el más adecuado?',
+ opts:['Fine-tuning mensual del modelo','Retrieval-Augmented Generation (RAG) con Bedrock Knowledge Bases','Aumentar el parámetro de temperature','Usar un modelo de mayor tamaño'],
+ correct:1,
+ exp:'RAG está diseñado exactamente para este caso: datos que cambian con frecuencia. El modelo consulta la fuente externa actualizada en el momento de la respuesta, sin necesidad de reentrenar. Fine-tuning es costoso y no resuelve datos que cambian a diario; temperature y el tamaño del modelo no tienen relación con la actualidad de la información.'},
+{d:'d3', q:'Un equipo ya usa Amazon Aurora PostgreSQL para su aplicación transaccional y ahora quiere agregar búsqueda semántica sobre documentos sin migrar de motor de base de datos. ¿Qué opción es la más práctica?',
+ opts:['Migrar todo a Amazon Neptune','Usar Aurora PostgreSQL con la extensión pgvector','Migrar a Amazon DocumentDB','Construir un motor de búsqueda vectorial propio sobre EC2'],
+ correct:1,
+ exp:'pgvector permite añadir capacidades vectoriales directamente a una base PostgreSQL existente (Aurora o RDS), evitando migrar de motor. Neptune es para grafos/relaciones, DocumentDB es para datos tipo JSON, y construir un motor propio añade complejidad innecesaria cuando ya existe una opción administrada.'},
+{d:'d3', q:'Durante una demo, un usuario logra que el modelo ignore sus instrucciones de sistema y revele el prompt original mediante instrucciones cuidadosamente diseñadas en su mensaje. ¿Cómo se llama este tipo de ataque y qué servicio de AWS ayuda a mitigarlo?',
+ opts:['Data poisoning; se mitiga con SageMaker Clarify','Prompt injection / hijacking; se mitiga con Amazon Bedrock Guardrails','Model inversion; se mitiga con AWS KMS','Overfitting; se mitiga con SageMaker Debugger'],
+ correct:1,
+ exp:'Inyectar instrucciones maliciosas en el input del usuario para modificar el comportamiento del modelo es prompt injection/hijacking. Amazon Bedrock Guardrails está diseñado para mitigar este tipo de ataques mediante filtros de contenido y protección de temas/PII.'},
+{d:'d3', q:'Un equipo necesita que las respuestas de su modelo sean lo más consistentes y predecibles posible para generar reportes financieros automatizados. ¿Qué ajuste de parámetro de inferencia es más apropiado?',
+ opts:['Temperature alta (cercana a 1)','Temperature baja (cercana a 0)','Aumentar el top-K a un valor muy alto','Eliminar las stop sequences'],
+ correct:1,
+ exp:'Una temperature baja hace que el modelo favorezca los tokens más probables, produciendo respuestas más consistentes y deterministas — ideal para reportes donde no se desea creatividad ni variabilidad.'},
+{d:'d4', q:'Un banco entrena un modelo de aprobación de crédito y descubre que rechaza sistemáticamente solicitudes de un grupo demográfico específico, incluso con perfiles financieros similares a otros grupos. ¿Qué principio de IA responsable se está vulnerando?',
+ opts:['Robustness','Fairness / Bias','Veracity','Governance'],
+ correct:1,
+ exp:'Un trato sistemáticamente desigual hacia un grupo demográfico es un problema clásico de bias/fairness, generalmente originado en los datos de entrenamiento. SageMaker Clarify es la herramienta de AWS para detectar este tipo de sesgo.'},
+{d:'d4', q:'¿Qué herramienta de AWS permite explicar CUÁNTO pesa cada variable (feature) en la decisión final de un modelo, usando valores SHAP?',
+ opts:['SageMaker Model Monitor','SageMaker Clarify','Amazon Augmented AI (A2I)','AWS Audit Manager'],
+ correct:1,
+ exp:'SageMaker Clarify ofrece feature attribution mediante valores SHAP, indicando cuánto contribuye cada variable a una predicción específica. Model Monitor vigila el drift en producción, A2I enruta casos a revisión humana, y Audit Manager recolecta evidencia de cumplimiento.'},
+{d:'d5', q:'Una organización necesita saber exactamente quién realizó cada llamada a la API de Bedrock en su cuenta de AWS, incluyendo fecha, hora y origen, para una auditoría de seguridad. ¿Qué servicio deben revisar?',
+ opts:['Amazon CloudWatch','AWS CloudTrail','AWS Config','AWS Trusted Advisor'],
+ correct:1,
+ exp:'CloudTrail registra todas las acciones/llamadas a la API en una cuenta de AWS: qué se hizo, quién lo hizo y cuándo — exactamente lo que pide una auditoría de accesos. CloudWatch se enfoca en métricas de rendimiento, y Config en el estado/cambios de configuración de los recursos.'},
+{d:'d5', q:'Una empresa de salud debe demostrar a un regulador que su aplicación de IA generativa cumple con HIPAA, recolectando evidencia de forma continua sin trabajo manual. ¿Qué servicio de AWS es el más adecuado?',
+ opts:['AWS Audit Manager','Amazon Macie','AWS Shield','AWS PrivateLink'],
+ correct:0,
+ exp:'AWS Audit Manager automatiza la recolección continua de evidencia de auditoría para demostrar cumplimiento con regulaciones como HIPAA, GDPR o ISO 27001. Macie se enfoca en descubrir datos sensibles en S3, Shield protege contra DDoS, y PrivateLink conecta servicios sin exponer tráfico a internet.'},
+{d:'d5', q:'Un equipo quiere que su aplicación en EC2 se comunique con Amazon Bedrock sin que el tráfico salga nunca a la internet pública. ¿Qué servicio deben usar?',
+ opts:['AWS PrivateLink','Amazon Macie','AWS KMS','Security Groups únicamente'],
+ correct:0,
+ exp:'AWS PrivateLink permite conectar aplicaciones con servicios de AWS a través de la red privada de AWS, evitando que el tráfico salga a internet y reduciendo la superficie de ataque.'},
+{d:'d2', q:'Un gerente de producto pregunta cuál sería la forma MÁS económica y rápida de ajustar el comportamiento de un modelo fundacional para un caso de uso específico, sin modificar sus pesos. ¿Cuál es la mejor respuesta?',
+ opts:['Pre-training desde cero','Fine-tuning completo','Prompt engineering / In-Context Learning','Distillation'],
+ correct:2,
+ exp:'Prompt engineering (y el In-Context Learning, dar ejemplos dentro del prompt) es la opción más económica y rápida porque no requiere modificar los pesos del modelo. Pre-training y fine-tuning implican costo y tiempo significativamente mayores; distillation entrena un modelo nuevo más pequeño.'},
+{d:'d2', q:'Un equipo de desarrollo quiere desplegar en producción un agente de IA con gestión de memoria, identidad, sesiones aisladas y observabilidad, sin construir esa infraestructura desde cero, y usando el framework open source que ya utilizan. ¿Qué combinación de AWS encaja mejor?',
+ opts:['Amazon SageMaker JumpStart + Amazon Personalize','Amazon Bedrock AgentCore para operar el agente en producción','Amazon Q Business únicamente','AWS Glue DataBrew + Amazon Forecast'],
+ correct:1,
+ exp:'Amazon Bedrock AgentCore está diseñado exactamente para esto: provee runtime, memoria, identidad, aislamiento de sesión y observabilidad para agentes en producción, funcionando con frameworks open source (Strands, LangGraph, CrewAI) y cualquier modelo, sin que el equipo tenga que construir esa infraestructura.'},
+{d:'d3', q:'Un equipo de evaluación quiere calificar automáticamente miles de respuestas generadas por su modelo, algo inviable de hacer manualmente con evaluadores humanos para cada respuesta, pero necesita más matiz del que dan las métricas automáticas tradicionales como ROUGE o BLEU. ¿Qué enfoque es más apropiado?',
+ opts:['LLM-as-a-judge: usar otro modelo de lenguaje para evaluar las respuestas','Aumentar el valor de temperature','Aplicar únicamente BERTScore','Reducir el tamaño del modelo evaluado'],
+ correct:0,
+ exp:'LLM-as-a-judge usa un modelo de lenguaje (generalmente más grande o especializado) para evaluar y calificar las respuestas de otro modelo con criterios más matizados que las métricas de superposición de texto (ROUGE/BLEU), y escala mucho mejor que la evaluación humana exhaustiva.'},
+{d:'d3', q:'Una empresa quiere que su modelo genere respuestas más alineadas con las preferencias subjetivas de sus usuarios (tono, utilidad percibida), no solo que siga instrucciones literales. ¿Qué técnica de entrenamiento es la más adecuada?',
+ opts:['RLHF (Reinforcement Learning from Human Feedback)','K-means','Regresión logística','SageMaker Model Monitor'],
+ correct:0,
+ exp:'RLHF usa calificaciones humanas sobre las respuestas del modelo como señal de recompensa para ajustar el modelo hacia lo que las personas realmente prefieren, más allá de solo seguir instrucciones literalmente (que sería más el rol de instruction tuning).'},
+{d:'d5', q:'Una aplicación de IA en el sector legal necesita asegurarse de que sus respuestas estén ancladas a fuentes verificables y reducir el riesgo de que el modelo invente jurisprudencia. ¿Qué combinación de técnicas ayuda más directamente a este objetivo?',
+ opts:['Aumentar el max tokens de la respuesta','RAG grounding + output validation + confidence scoring','Cambiar el modelo por uno con mayor temperature','Eliminar el uso de Guardrails para mayor flexibilidad'],
+ correct:1,
+ exp:'El "grounding" mediante RAG ancla las respuestas a documentos/fuentes verificables recuperadas en el momento, la validación de salida revisa la respuesta antes de entregarla, y el confidence scoring mide qué tan segura está la respuesta — juntas reducen directamente el riesgo de alucinaciones con consecuencias legales.'},
+];
+
+/* ================= STATE ================= */
+let currentDomain = 'all';
+let deck = [...CARDS.keys()];
+let pos = 0;
+let cardStatus = {};
+let flipped = false;
+
+let qDeck = [...QUESTIONS.keys()];
+let qPos = 0;
+let qAnswered = {};
+let qScore = 0;
+
+let readDomain = 'exam';
+let readSec = 0;
+
+/* ================= PERFILES + PROGRESO (localStorage) ================= */
+let profiles = {};
+let currentProfile = '';
+
+function loadProfiles(){ try{ return JSON.parse(localStorage.getItem('aif_profiles'))||{}; }catch(e){ return {}; } }
+function saveProfiles(){ localStorage.setItem('aif_profiles', JSON.stringify(profiles)); }
+function progKey(name){ return 'aif_prog_'+name; }
+
+function saveProgress(){
+  if(!currentProfile) return;
+  localStorage.setItem(progKey(currentProfile), JSON.stringify({cardStatus, qAnswered, qScore}));
+}
+function loadProgress(){
+  cardStatus = {}; qAnswered = {}; qScore = 0;
+  if(!currentProfile) return;
+  try{
+    const d = JSON.parse(localStorage.getItem(progKey(currentProfile)));
+    if(d){ cardStatus = d.cardStatus||{}; qAnswered = d.qAnswered||{}; qScore = d.qScore||0; }
+  }catch(e){}
+}
+
+function refreshProfileSelect(){
+  const sel = document.getElementById('profileSelect');
+  sel.innerHTML = '';
+  Object.keys(profiles).forEach(n=>{
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n;
+    if(n===currentProfile) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function switchProfile(name){
+  if(!profiles[name]) return;
+  currentProfile = name;
+  localStorage.setItem('aif_current', name);
+  loadProgress();
+  pos = 0; qPos = 0;
+  renderChips(); renderCard();
+  if(document.getElementById('quizMode').classList.contains('active')) renderQuestion();
+  refreshProfileSelect();
+}
+
+function newProfile(){
+  const name = (prompt('Nombre del nuevo perfil:')||'').trim();
+  if(!name) return;
+  if(profiles[name]){ alert('Ya existe un perfil con ese nombre.'); switchProfile(name); return; }
+  profiles[name] = true; saveProfiles();
+  switchProfile(name);
+}
+
+function renameProfile(){
+  if(!currentProfile) return;
+  const name = (prompt('Nuevo nombre para "'+currentProfile+'":', currentProfile)||'').trim();
+  if(!name || name===currentProfile) return;
+  if(profiles[name]){ alert('Ya existe un perfil con ese nombre.'); return; }
+  // migra progreso al nuevo nombre
+  const prog = localStorage.getItem(progKey(currentProfile));
+  if(prog) localStorage.setItem(progKey(name), prog);
+  localStorage.removeItem(progKey(currentProfile));
+  delete profiles[currentProfile];
+  profiles[name] = true; saveProfiles();
+  currentProfile = name; localStorage.setItem('aif_current', name);
+  refreshProfileSelect();
+}
+
+function initProfiles(){
+  profiles = loadProfiles();
+  if(Object.keys(profiles).length===0){ profiles['Yo'] = true; saveProfiles(); }
+  currentProfile = localStorage.getItem('aif_current');
+  if(!currentProfile || !profiles[currentProfile]){ currentProfile = Object.keys(profiles)[0]; }
+  localStorage.setItem('aif_current', currentProfile);
+  loadProgress();
+  refreshProfileSelect();
+}
+
+function domainLabel(id){ return DOMAINS.find(d=>d.id===id)?.label.split('·')[0].trim() || id.toUpperCase(); }
+
+/* ================= MODE SWITCH ================= */
+function setMode(mode){
+  document.getElementById('btnRead').classList.toggle('active', mode==='read');
+  document.getElementById('btnFlash').classList.toggle('active', mode==='flash');
+  document.getElementById('btnQuiz').classList.toggle('active', mode==='quiz');
+  document.getElementById('readMode').style.display = mode==='read' ? 'block' : 'none';
+  document.getElementById('flashMode').style.display = mode==='flash' ? 'block' : 'none';
+  document.getElementById('quizMode').classList.toggle('active', mode==='quiz');
+  if(mode==='read') renderRead();
+  if(mode==='quiz') renderQuestion();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ================= READ MODE ================= */
+function renderReadChips(){
+  const el = document.getElementById('readChips');
+  el.innerHTML = '';
+  STUDY.forEach(s=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (readDomain===s.id ? ' active' : '');
+    chip.textContent = s.chip;
+    chip.onclick = ()=>{ readDomain = s.id; readSec = 0; renderRead(); window.scrollTo({top:0,behavior:'smooth'}); };
+    el.appendChild(chip);
+  });
+}
+
+function renderRead(){
+  renderReadChips();
+  const s = STUDY.find(x=>x.id===readDomain) || STUDY[0];
+
+  // TOC
+  const toc = document.getElementById('readToc');
+  toc.innerHTML = '';
+  s.sections.forEach((sec,i)=>{
+    const a = document.createElement('a');
+    a.href = '#sec'+i;
+    a.textContent = (i+1)+'. '+sec.h;
+    a.onclick = (e)=>{ e.preventDefault(); readSec=i; document.getElementById('sec'+i).scrollIntoView({behavior:'smooth',block:'start'}); };
+    toc.appendChild(a);
+  });
+
+  // Article
+  const art = document.getElementById('article');
+  let html = `<h2>${s.title}</h2><p class="lead">${s.lead}</p>`;
+  s.sections.forEach((sec,i)=>{
+    html += `<div class="sec" id="sec${i}"><h3><span class="n">${i+1}</span>${sec.h}</h3>${sec.html}</div>`;
+  });
+  art.innerHTML = html;
+
+  // nav buttons enable/disable
+  const idx = STUDY.findIndex(x=>x.id===readDomain);
+  document.getElementById('readPrev').disabled = (idx===0);
+  document.getElementById('readNext').disabled = (idx===STUDY.length-1);
+  document.getElementById('readPrev').textContent = idx>0 ? '← '+STUDY[idx-1].chip : '←';
+  document.getElementById('readNext').textContent = idx<STUDY.length-1 ? STUDY[idx+1].chip+' →' : '→';
+}
+
+function readStep(dir){
+  const idx = STUDY.findIndex(x=>x.id===readDomain);
+  const next = idx + dir;
+  if(next<0 || next>=STUDY.length) return;
+  readDomain = STUDY[next].id;
+  readSec = 0;
+  renderRead();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ================= DOMAIN CHIPS (flashcards) ================= */
+function renderChips(){
+  const el = document.getElementById('domainChips');
+  el.innerHTML = '';
+  const allChip = document.createElement('button');
+  allChip.className = 'chip' + (currentDomain==='all' ? ' active' : '');
+  allChip.textContent = 'Todos';
+  allChip.onclick = () => filterDomain('all');
+  el.appendChild(allChip);
+  DOMAINS.forEach(dom=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (currentDomain===dom.id ? ' active' : '');
+    chip.innerHTML = dom.label + `<span class="w">${dom.weight}%</span>`;
+    chip.onclick = () => filterDomain(dom.id);
+    el.appendChild(chip);
+  });
+}
+
+function filterDomain(id){
+  currentDomain = id;
+  deck = CARDS.map((c,i)=>i).filter(i => id==='all' || CARDS[i].d===id);
+  pos = 0;
+  flipped = false;
+  renderChips();
+  renderCard();
+}
+
+/* ================= FLASHCARDS ================= */
+function renderCard(){
+  if(deck.length===0){
+    document.getElementById('frontText').textContent = 'No hay tarjetas en este dominio.';
+    return;
+  }
+  const idx = deck[pos];
+  const c = CARDS[idx];
+  document.getElementById('tagFront').textContent = domainLabel(c.d);
+  document.getElementById('tagBack').textContent = domainLabel(c.d);
+  document.getElementById('idxFront').textContent = (pos+1)+' / '+deck.length;
+  document.getElementById('idxBack').textContent = (pos+1)+' / '+deck.length;
+  document.getElementById('frontText').textContent = c.f;
+  document.getElementById('backText').textContent = c.b;
+  document.getElementById('card').classList.remove('flipped');
+  flipped = false;
+  updateMarkButtons(idx);
+  updateProgress();
+}
+
+function flipCard(){
+  flipped = !flipped;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function nextCard(){ if(deck.length===0) return; pos = (pos+1) % deck.length; renderCard(); }
+function prevCard(){ if(deck.length===0) return; pos = (pos-1+deck.length) % deck.length; renderCard(); }
+
+function markCard(status){
+  const idx = deck[pos];
+  cardStatus[idx] = (cardStatus[idx]===status) ? undefined : status;
+  updateMarkButtons(idx);
+  updateProgress();
+  saveProgress();
+  setTimeout(nextCard, 250);
+}
+
+function updateMarkButtons(idx){
+  document.getElementById('btnReview').classList.toggle('picked', cardStatus[idx]==='review');
+  document.getElementById('btnKnow').classList.toggle('picked', cardStatus[idx]==='know');
+}
+
+function shuffleCards(){
+  for(let i=deck.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]] = [deck[j],deck[i]]; }
+  pos = 0; renderCard();
+}
+
+function resetProgress(){
+  if(!confirm('¿Reiniciar el progreso de "'+currentProfile+'"? (flashcards y respuestas)')) return;
+  cardStatus = {}; qAnswered = {}; qScore = 0;
+  saveProgress();
+  updateProgress(); updateMarkButtons(deck[pos]);
+}
+
+function updateProgress(){
+  const knowCount = Object.values(cardStatus).filter(s=>s==='know').length;
+  const reviewCount = Object.values(cardStatus).filter(s=>s==='review').length;
+  document.getElementById('statTotal').textContent = CARDS.length;
+  document.getElementById('statKnow').textContent = knowCount;
+  document.getElementById('statReview').textContent = reviewCount;
+  document.getElementById('progLabel').textContent = (pos+1)+' / '+deck.length;
+  const pct = deck.length ? Math.round(((pos+1)/deck.length)*100) : 0;
+  document.getElementById('progFill').style.width = pct+'%';
+}
+
+/* keyboard (solo en flashcards) */
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('flashMode').style.display==='none') return;
+  if(e.key==='ArrowRight') nextCard();
+  if(e.key==='ArrowLeft') prevCard();
+  if(e.key===' '){ e.preventDefault(); flipCard(); }
+});
+
+/* ================= QUIZ ================= */
+function renderQuestion(){
+  const idx = qDeck[qPos];
+  const item = QUESTIONS[idx];
+  document.getElementById('qTag').textContent = domainLabel(item.d);
+  document.getElementById('qCount').textContent = 'Pregunta '+(qPos+1)+' / '+qDeck.length;
+  document.getElementById('qText').textContent = item.q;
+  const optsEl = document.getElementById('qOptions');
+  optsEl.innerHTML = '';
+  const chosen = qAnswered[idx];
+  item.opts.forEach((opt, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = String.fromCharCode(65+i) + '. ' + opt;
+    if(chosen !== undefined){
+      btn.disabled = true;
+      if(i === item.correct) btn.classList.add('correct');
+      else if(i === chosen) btn.classList.add('wrong');
+    }
+    btn.onclick = () => answerQuestion(idx, i);
+    optsEl.appendChild(btn);
+  });
+  const explainEl = document.getElementById('qExplain');
+  if(chosen !== undefined){
+    explainEl.innerHTML = (chosen===item.correct ? '<b>✔ Correcto. </b>' : '<b>✘ Incorrecto. </b>') + item.exp;
+    explainEl.classList.add('show');
+  } else {
+    explainEl.classList.remove('show');
+  }
+  document.getElementById('qScore').textContent = qScore;
+}
+
+function answerQuestion(idx, choice){
+  if(qAnswered[idx] !== undefined) return;
+  qAnswered[idx] = choice;
+  if(choice === QUESTIONS[idx].correct) qScore++;
+  saveProgress();
+  renderQuestion();
+}
+
+function nextQuestion(){ qPos = (qPos+1) % qDeck.length; renderQuestion(); }
+function prevQuestion(){ qPos = (qPos-1+qDeck.length) % qDeck.length; renderQuestion(); }
+
+/* ================= INIT ================= */
+initProfiles();
+renderChips();
+renderCard();
+setMode('read');
+</script>
+</body>
+</html>
