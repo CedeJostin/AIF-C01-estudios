@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIF-C01 · App de estudio</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <a class="backlink" href="index.html">&larr; Todos los ex&aacute;menes</a>
+
+  <div class="top">
+    <div>
+      <div class="eyebrow" id="eyebrowText">Certificación &middot; Estudio</div>
+      <h1>AWS Certified AI Practitioner</h1>
+    </div>
+  </div>
+  <div class="sub" id="subText">AIF-C01 &middot; 65 preguntas &middot; 90 min &middot; puntaje mínimo 700/1000 &middot; teoría + flashcards + práctica</div>
+
+  <div class="profilebar">
+    <span class="plabel" id="plabelText">👤 Perfil:</span>
+    <select id="profileSelect" onchange="switchProfile(this.value)"></select>
+    <button class="pbtn" id="btnNewProfile" onclick="newProfile()">＋ Nuevo</button>
+    <button class="pbtn" id="btnRenameProfile" onclick="renameProfile()">✎ Renombrar</button>
+    <button class="pbtn" id="langToggle" onclick="toggleLang()">🌐 ES</button>
+    <span class="psaved" id="psavedText">tu progreso se guarda en este navegador</span>
+  </div>
+
+  <div class="modebar">
+    <button class="mode-btn active" id="btnRead" onclick="setMode('read')">📖 Estudiar</button>
+    <button class="mode-btn" id="btnFlash" onclick="setMode('flash')">🗂 Flashcards</button>
+    <button class="mode-btn" id="btnQuiz" onclick="setMode('quiz')">📝 Preguntas de práctica</button>
+  </div>
+
+  <!-- ================= READ MODE ================= -->
+  <div id="readMode">
+    <div class="domains" id="readChips"></div>
+    <div class="toc" id="readToc"></div>
+    <div class="article" id="article"></div>
+    <div class="readnav">
+      <button id="readPrev" onclick="readStep(-1)">← Sección anterior</button>
+      <button id="readNext" onclick="readStep(1)">Siguiente sección →</button>
+    </div>
+  </div>
+
+  <!-- ================= FLASHCARD MODE ================= -->
+  <div id="flashMode" style="display:none">
+    <div class="domains" id="domainChips"></div>
+
+    <div class="progress-row">
+      <span id="progLabel">1 / 65</span>
+      <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="stage">
+      <div class="card" id="card" onclick="flipCard()">
+        <div class="face front">
+          <div class="tab">
+            <span class="domain-tag" id="tagFront">D1</span>
+            <span class="idx" id="idxFront"></span>
+          </div>
+          <div class="face-label" id="lblFront">Término / Concepto</div>
+          <div class="face-content"><div class="front-text" id="frontText"></div></div>
+          <div class="hint" id="hintText">toca la tarjeta para ver la respuesta</div>
+        </div>
+        <div class="face back">
+          <div class="tab">
+            <span class="domain-tag" id="tagBack">D1</span>
+            <span class="idx" id="idxBack"></span>
+          </div>
+          <div class="face-label" id="lblBack">Explicación</div>
+          <div class="face-content"><div class="back-text" id="backText"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="nav-btn" onclick="prevCard()">←</button>
+      <div class="mark-row">
+        <button class="mark-btn review" id="btnReview" onclick="markCard('review')">Repasar de nuevo</button>
+        <button class="mark-btn know" id="btnKnow" onclick="markCard('know')">Ya lo sé</button>
+      </div>
+      <button class="nav-btn" onclick="nextCard()">→</button>
+    </div>
+
+    <div class="util-row">
+      <button class="util-btn" id="btnShuffleCards" onclick="shuffleCards()">barajar</button>
+      <button class="util-btn" id="btnResetCards" onclick="resetProgress()">reiniciar progreso</button>
+    </div>
+
+    <div class="stats">
+      <div><span id="lblTotal">Total</span><b id="statTotal">65</b></div>
+      <div class="know"><span id="lblKnow">Ya lo sé</span><b id="statKnow">0</b></div>
+      <div class="review"><span id="lblReview">A repasar</span><b id="statReview">0</b></div>
+    </div>
+  </div>
+
+  <!-- ================= QUIZ MODE ================= -->
+  <div id="quizMode" class="qwrap">
+    <div class="domains" id="quizChips"></div>
+    <div class="util-row" style="margin:0 0 16px;">
+      <button class="util-btn" id="btnShuffleQuiz" onclick="shuffleQuiz()">barajar</button>
+      <button class="util-btn" id="btnResetQuiz" onclick="resetQuiz()">reiniciar respuestas</button>
+    </div>
+    <div class="qcard">
+      <div class="qmeta">
+        <span class="domain-tag" id="qTag">D1</span>
+        <span class="qcount" id="qCount">Pregunta 1 / 15</span>
+      </div>
+      <div class="qtext" id="qText"></div>
+      <div id="qOptions"></div>
+      <button class="pbtn" id="qSubmit" style="display:none;margin-top:8px;" onclick="submitMulti()">Comprobar respuesta</button>
+      <div class="explain" id="qExplain"></div>
+    </div>
+    <div class="qnav">
+      <button class="nav-btn" onclick="prevQuestion()">←</button>
+      <div class="stats" style="margin-top:0;">
+        <div><span id="lblScore">Aciertos</span><b id="qScore" style="color:var(--accent-2)">0</b></div>
+        <div><span id="lblDone">Respondidas</span><b id="qDone">0</b></div>
+      </div>
+      <button class="nav-btn" onclick="nextQuestion()">→</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="data/aif-c01/exam.js"></script>
+<script src="data/aif-c01/study.js"></script>
+<script src="data/aif-c01/cards.js"></script>
+<script src="data/aif-c01/questions.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
